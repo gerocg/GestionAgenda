@@ -121,6 +121,10 @@ namespace GestionAgenda.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("telefono")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.HasKey("usuario_paciente");
 
                     b.ToTable("Pacientes");
@@ -178,21 +182,6 @@ namespace GestionAgenda.Migrations
                     b.ToTable("Recordatorios");
                 });
 
-            modelBuilder.Entity("GestionAgenda.Modelo.Telefono", b =>
-                {
-                    b.Property<string>("numero")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("Pacienteusuario_paciente")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.HasKey("numero");
-
-                    b.HasIndex("Pacienteusuario_paciente");
-
-                    b.ToTable("Telefonos");
-                });
-
             modelBuilder.Entity("GestionAgenda.Modelo.Archivo", b =>
                 {
                     b.HasOne("GestionAgenda.Modelo.Cita", "cita")
@@ -247,18 +236,6 @@ namespace GestionAgenda.Migrations
                     b.Navigation("paciente");
 
                     b.Navigation("profesional");
-                });
-
-            modelBuilder.Entity("GestionAgenda.Modelo.Telefono", b =>
-                {
-                    b.HasOne("GestionAgenda.Modelo.Paciente", null)
-                        .WithMany("telefonos")
-                        .HasForeignKey("Pacienteusuario_paciente");
-                });
-
-            modelBuilder.Entity("GestionAgenda.Modelo.Paciente", b =>
-                {
-                    b.Navigation("telefonos");
                 });
 #pragma warning restore 612, 618
         }

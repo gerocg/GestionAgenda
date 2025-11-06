@@ -11,6 +11,6 @@ namespace GestionAgenda.Modelo
         public String email { get; set; }
         public String direccion { get; set; }
         public DateTime fecha_nacimiento { get; set; }
-        public ICollection<Telefono> telefonos { get; set; }
+        public String telefono { get; set; }
     }
 }

@@ -94,124 +94,15 @@
   },
   {
     "ContainingType": "GestionAgenda.Controllers.PacientesController",
-    "Method": "DeletePaciente",
-    "RelativePath": "api/Pacientes/{id}",
-    "HttpMethod": "DELETE",
-    "IsController": true,
-    "Order": 0,
-    "Parameters": [
-      {
-        "Name": "id",
-        "Type": "System.String",
-        "IsRequired": true
-      }
-    ],
-    "ReturnTypes": []
-  },
-  {
-    "ContainingType": "GestionAgenda.Controllers.TelefonoesController",
-    "Method": "GetTelefonos",
-    "RelativePath": "api/Telefonoes",
-    "HttpMethod": "GET",
-    "IsController": true,
-    "Order": 0,
-    "Parameters": [],
-    "ReturnTypes": [
-      {
-        "Type": "System.Collections.Generic.IEnumerable\u00601[[GestionAgenda.Modelo.Telefono, GestionAgenda, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
-        "MediaTypes": [
-          "text/plain",
-          "application/json",
-          "text/json"
-        ],
-        "StatusCode": 200
-      }
-    ]
-  },
-  {
-    "ContainingType": "GestionAgenda.Controllers.TelefonoesController",
-    "Method": "PostTelefono",
-    "RelativePath": "api/Telefonoes",
+    "Method": "Login",
+    "RelativePath": "api/Pacientes/login",
     "HttpMethod": "POST",
     "IsController": true,
     "Order": 0,
     "Parameters": [
       {
-        "Name": "telefono",
-        "Type": "GestionAgenda.Modelo.Telefono",
-        "IsRequired": true
-      }
-    ],
-    "ReturnTypes": [
-      {
-        "Type": "GestionAgenda.Modelo.Telefono",
-        "MediaTypes": [
-          "text/plain",
-          "application/json",
-          "text/json"
-        ],
-        "StatusCode": 200
-      }
-    ]
-  },
-  {
-    "ContainingType": "GestionAgenda.Controllers.TelefonoesController",
-    "Method": "GetTelefono",
-    "RelativePath": "api/Telefonoes/{id}",
-    "HttpMethod": "GET",
-    "IsController": true,
-    "Order": 0,
-    "Parameters": [
-      {
-        "Name": "id",
-        "Type": "System.String",
-        "IsRequired": true
-      }
-    ],
-    "ReturnTypes": [
-      {
-        "Type": "GestionAgenda.Modelo.Telefono",
-        "MediaTypes": [
-          "text/plain",
-          "application/json",
-          "text/json"
-        ],
-        "StatusCode": 200
-      }
-    ]
-  },
-  {
-    "ContainingType": "GestionAgenda.Controllers.TelefonoesController",
-    "Method": "PutTelefono",
-    "RelativePath": "api/Telefonoes/{id}",
-    "HttpMethod": "PUT",
-    "IsController": true,
-    "Order": 0,
-    "Parameters": [
-      {
-        "Name": "id",
-        "Type": "System.String",
-        "IsRequired": true
-      },
-      {
-        "Name": "telefono",
-        "Type": "GestionAgenda.Modelo.Telefono",
-        "IsRequired": true
-      }
-    ],
-    "ReturnTypes": []
-  },
-  {
-    "ContainingType": "GestionAgenda.Controllers.TelefonoesController",
-    "Method": "DeleteTelefono",
-    "RelativePath": "api/Telefonoes/{id}",
-    "HttpMethod": "DELETE",
-    "IsController": true,
-    "Order": 0,
-    "Parameters": [
-      {
-        "Name": "id",
-        "Type": "System.String",
+        "Name": "login",
+        "Type": "GestionAgenda.DTOs.LoginDTO",
         "IsRequired": true
       }
     ],

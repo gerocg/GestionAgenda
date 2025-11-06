@@ -286,3 +286,4 @@ C:\Users\Gerónimo\source\repos\GestionAgenda\GestionAgenda\bin\Debug\net8.0\run
 C:\Users\Gerónimo\source\repos\GestionAgenda\GestionAgenda\bin\Debug\net8.0\runtimes\win\lib\net7.0\System.Drawing.Common.dll
 C:\Users\Gerónimo\source\repos\GestionAgenda\GestionAgenda\bin\Debug\net8.0\runtimes\win\lib\net7.0\System.Security.Cryptography.ProtectedData.dll
 C:\Users\Gerónimo\source\repos\GestionAgenda\GestionAgenda\bin\Debug\net8.0\runtimes\win\lib\net7.0\System.Windows.Extensions.dll
+C:\Users\Gerónimo\source\repos\GestionAgenda\GestionAgenda\obj\Debug\net8.0\GestionAgenda.sourcelink.json

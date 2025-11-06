@@ -20,7 +20,8 @@ namespace GestionAgenda.Migrations
                     nombre_completo_paciente = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     email = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     direccion = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    fecha_nacimiento = table.Column<DateOnly>(type: "date", nullable: false)
+                    fecha_nacimiento = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    telefono = table.Column<string>(type: "nvarchar(max)", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -58,23 +59,6 @@ namespace GestionAgenda.Migrations
                         principalTable: "Pacientes",
                         principalColumn: "usuario_paciente",
                         onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "Telefonos",
-                columns: table => new
-                {
-                    numero = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    Pacienteusuario_paciente = table.Column<string>(type: "nvarchar(450)", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Telefonos", x => x.numero);
-                    table.ForeignKey(
-                        name: "FK_Telefonos_Pacientes_Pacienteusuario_paciente",
-                        column: x => x.Pacienteusuario_paciente,
-                        principalTable: "Pacientes",
-                        principalColumn: "usuario_paciente");
                 });
 
             migrationBuilder.CreateTable(
@@ -181,11 +165,6 @@ namespace GestionAgenda.Migrations
                 name: "IX_Recordatorios_profesionalusuario_profesional",
                 table: "Recordatorios",
                 column: "profesionalusuario_profesional");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Telefonos_Pacienteusuario_paciente",
-                table: "Telefonos",
-                column: "Pacienteusuario_paciente");
         }
 
         /// <inheritdoc />
@@ -196,9 +175,6 @@ namespace GestionAgenda.Migrations
 
             migrationBuilder.DropTable(
                 name: "Recordatorios");
-
-            migrationBuilder.DropTable(
-                name: "Telefonos");
 
             migrationBuilder.DropTable(
                 name: "Citas");

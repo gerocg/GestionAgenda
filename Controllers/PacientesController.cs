@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using GestionAgenda.Context;
 using GestionAgenda.Modelo;
+using GestionAgenda.DTOs;
 
 namespace GestionAgenda.Controllers
 {
@@ -98,20 +99,32 @@ namespace GestionAgenda.Controllers
             return CreatedAtAction("GetPaciente", new { id = paciente.usuario_paciente }, paciente);
         }
 
-        // DELETE: api/Pacientes/5
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeletePaciente(string id)
+
+        [HttpPost("login")]
+        public async Task<IActionResult> Login([FromBody] LoginDTO login)
         {
-            var paciente = await _context.Pacientes.FindAsync(id);
-            if (paciente == null)
+            if(PacienteExists(login.usuario_paciente) == false)
             {
-                return NotFound();
+                return NotFound("Datos incorrectos.");
             }
 
-            _context.Pacientes.Remove(paciente);
-            await _context.SaveChangesAsync();
+            // Busca el paciente por usuario
+            var paciente = await _context.Pacientes
+                .FirstOrDefaultAsync(p => p.usuario_paciente == login.usuario_paciente);
 
-            return NoContent();
+            // Compara contraseñas (por ahora sin encriptar)
+            if (paciente.contrasenia_paciente != login.contrasenia_paciente)
+            {
+                return BadRequest("Datos incorrectos.");
+            }
+
+            // Si todo va bien, devolvemos los datos del usuario (sin la contraseña)
+            return Ok(new
+            {
+                usuario = paciente.usuario_paciente,
+                nombre = paciente.nombre_completo_paciente,
+                email = paciente.email
+            });
         }
 
         private bool PacienteExists(string id)

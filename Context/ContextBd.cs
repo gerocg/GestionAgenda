@@ -13,8 +13,6 @@ namespace GestionAgenda.Context
         public DbSet<Cita> Citas { get; set; }
         public DbSet<Archivo> Archivos { get; set; }
         public DbSet<Recordatorio> Recordatorios { get; set; }
-        public DbSet<Telefono> Telefonos { get; set; }
-
 
     }
 }
