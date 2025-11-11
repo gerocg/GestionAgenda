@@ -197,6 +197,37 @@
           }
         }
       }
+    },
+    "/api/Pacientes/register": {
+      "post": {
+        "tags": [
+          "Pacientes"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegistroDTO"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegistroDTO"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegistroDTO"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -216,6 +247,40 @@
         "additionalProperties": false
       },
       "Paciente": {
+        "type": "object",
+        "properties": {
+          "usuario_paciente": {
+            "type": "string",
+            "nullable": true
+          },
+          "contrasenia_paciente": {
+            "type": "string",
+            "nullable": true
+          },
+          "nombre_completo_paciente": {
+            "type": "string",
+            "nullable": true
+          },
+          "email": {
+            "type": "string",
+            "nullable": true
+          },
+          "direccion": {
+            "type": "string",
+            "nullable": true
+          },
+          "fecha_nacimiento": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "telefono": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "RegistroDTO": {
         "type": "object",
         "properties": {
           "usuario_paciente": {

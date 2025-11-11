@@ -127,6 +127,41 @@ namespace GestionAgenda.Controllers
             });
         }
 
+        [HttpPost("register")]
+        public async Task<IActionResult> Register([FromBody] RegistroDTO registro)
+        {
+            if (PacienteExists(registro.usuario_paciente) == true)
+            {
+                return Conflict("Usuario ya existente.");
+            }
+
+            // Crea al usuario con los datos ingresados
+            var paciente = new Paciente
+            {
+                usuario_paciente = registro.usuario_paciente,
+                contrasenia_paciente = registro.contrasenia_paciente,
+                nombre_completo_paciente = registro.nombre_completo_paciente,
+                email = registro.email,
+                direccion = registro.direccion,
+                fecha_nacimiento = registro.fecha_nacimiento,
+                telefono = registro.telefono
+            };
+
+            _context.Pacientes.Add(paciente);
+
+            // 🔹 Guardar cambios en la base de datos
+            await _context.SaveChangesAsync();
+
+            // Si todo va bien, devolvemos los datos del usuario (sin la contraseña)
+            return Ok(new
+            {
+                usuario = paciente.usuario_paciente,
+                nombre = paciente.nombre_completo_paciente,
+                email = paciente.email
+            });
+        }
+
+
         private bool PacienteExists(string id)
         {
             return _context.Pacientes.Any(e => e.usuario_paciente == id);

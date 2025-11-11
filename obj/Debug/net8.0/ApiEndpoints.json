@@ -107,5 +107,21 @@
       }
     ],
     "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GestionAgenda.Controllers.PacientesController",
+    "Method": "Register",
+    "RelativePath": "api/Pacientes/register",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "registro",
+        "Type": "GestionAgenda.DTOs.RegistroDTO",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
   }
 ]
