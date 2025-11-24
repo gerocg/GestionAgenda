@@ -86,21 +86,18 @@ namespace GestionAgenda.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("id_hc"));
 
-                    b.Property<string>("pacienteusuario_paciente")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
                     b.HasKey("id_hc");
-
-                    b.HasIndex("pacienteusuario_paciente");
 
                     b.ToTable("Historiales");
                 });
 
             modelBuilder.Entity("GestionAgenda.Modelo.Paciente", b =>
                 {
-                    b.Property<string>("usuario_paciente")
-                        .HasColumnType("nvarchar(450)");
+                    b.Property<int>("id_paciente")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("id_paciente"));
 
                     b.Property<string>("contrasenia_paciente")
                         .IsRequired()
@@ -117,6 +114,9 @@ namespace GestionAgenda.Migrations
                     b.Property<DateTime>("fecha_nacimiento")
                         .HasColumnType("datetime2");
 
+                    b.Property<int>("historial_clinicoid_hc")
+                        .HasColumnType("int");
+
                     b.Property<string>("nombre_completo_paciente")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -125,7 +125,17 @@ namespace GestionAgenda.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.HasKey("usuario_paciente");
+                    b.Property<string>("usuario_paciente")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("id_paciente");
+
+                    b.HasIndex("historial_clinicoid_hc")
+                        .IsUnique();
+
+                    b.HasIndex("usuario_paciente")
+                        .IsUnique();
 
                     b.ToTable("Pacientes");
                 });
@@ -167,15 +177,15 @@ namespace GestionAgenda.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("pacienteusuario_paciente")
-                        .HasColumnType("nvarchar(450)");
+                    b.Property<int>("pacienteid_paciente")
+                        .HasColumnType("int");
 
                     b.Property<string>("profesionalusuario_profesional")
                         .HasColumnType("nvarchar(450)");
 
                     b.HasKey("id_recordatorio");
 
-                    b.HasIndex("pacienteusuario_paciente");
+                    b.HasIndex("pacienteid_paciente");
 
                     b.HasIndex("profesionalusuario_profesional");
 
@@ -196,7 +206,7 @@ namespace GestionAgenda.Migrations
             modelBuilder.Entity("GestionAgenda.Modelo.Cita", b =>
                 {
                     b.HasOne("GestionAgenda.Modelo.HistorialClinico", "hc")
-                        .WithMany()
+                        .WithMany("citas")
                         .HasForeignKey("hcid_hc")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -212,22 +222,24 @@ namespace GestionAgenda.Migrations
                     b.Navigation("profesional");
                 });
 
-            modelBuilder.Entity("GestionAgenda.Modelo.HistorialClinico", b =>
+            modelBuilder.Entity("GestionAgenda.Modelo.Paciente", b =>
                 {
-                    b.HasOne("GestionAgenda.Modelo.Paciente", "paciente")
-                        .WithMany()
-                        .HasForeignKey("pacienteusuario_paciente")
+                    b.HasOne("GestionAgenda.Modelo.HistorialClinico", "historial_clinico")
+                        .WithOne()
+                        .HasForeignKey("GestionAgenda.Modelo.Paciente", "historial_clinicoid_hc")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("paciente");
+                    b.Navigation("historial_clinico");
                 });
 
             modelBuilder.Entity("GestionAgenda.Modelo.Recordatorio", b =>
                 {
                     b.HasOne("GestionAgenda.Modelo.Paciente", "paciente")
                         .WithMany()
-                        .HasForeignKey("pacienteusuario_paciente");
+                        .HasForeignKey("pacienteid_paciente")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.HasOne("GestionAgenda.Modelo.Profesional", "profesional")
                         .WithMany()
@@ -236,6 +248,11 @@ namespace GestionAgenda.Migrations
                     b.Navigation("paciente");
 
                     b.Navigation("profesional");
+                });
+
+            modelBuilder.Entity("GestionAgenda.Modelo.HistorialClinico", b =>
+                {
+                    b.Navigation("citas");
                 });
 #pragma warning restore 612, 618
         }

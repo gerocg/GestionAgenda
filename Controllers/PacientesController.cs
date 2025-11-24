@@ -1,13 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using GestionAgenda.Context;
+using GestionAgenda.DTOs;
+using GestionAgenda.Modelo;
+using GestionAgenda.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using GestionAgenda.Context;
-using GestionAgenda.Modelo;
-using GestionAgenda.DTOs;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace GestionAgenda.Controllers
 {
@@ -16,10 +17,12 @@ namespace GestionAgenda.Controllers
     public class PacientesController : ControllerBase
     {
         private readonly ContextBd _context;
+        private readonly JwtService _jwt;
 
-        public PacientesController(ContextBd context)
+        public PacientesController(ContextBd context, JwtService jwt)
         {
             _context = context;
+            _jwt = jwt;
         }
 
         // GET: api/Pacientes
@@ -118,13 +121,14 @@ namespace GestionAgenda.Controllers
                 return BadRequest("Datos incorrectos.");
             }
 
-            // Si todo va bien, devolvemos los datos del usuario (sin la contraseña)
-            return Ok(new
-            {
-                usuario = paciente.usuario_paciente,
-                nombre = paciente.nombre_completo_paciente,
-                email = paciente.email
-            });
+            // Generar token JWT
+            var token = _jwt.GenerateToken(
+                paciente.usuario_paciente, // userId
+                paciente.email             // email
+            );
+
+            // Si todo va bien, devolvemos el token
+            return Ok(new{token});
         }
 
         [HttpPost("register")]

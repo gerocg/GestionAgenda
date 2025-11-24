@@ -6,26 +6,21 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace GestionAgenda.Migrations
 {
     /// <inheritdoc />
-    public partial class Inicio : Migration
+    public partial class Aaa : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
-                name: "Pacientes",
+                name: "Historiales",
                 columns: table => new
                 {
-                    usuario_paciente = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    contrasenia_paciente = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    nombre_completo_paciente = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    email = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    direccion = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    fecha_nacimiento = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    telefono = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                    id_hc = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1")
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Pacientes", x => x.usuario_paciente);
+                    table.PrimaryKey("PK_Historiales", x => x.id_hc);
                 });
 
             migrationBuilder.CreateTable(
@@ -43,48 +38,29 @@ namespace GestionAgenda.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Historiales",
+                name: "Pacientes",
                 columns: table => new
                 {
-                    id_hc = table.Column<int>(type: "int", nullable: false)
+                    id_paciente = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    pacienteusuario_paciente = table.Column<string>(type: "nvarchar(450)", nullable: false)
+                    usuario_paciente = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    contrasenia_paciente = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    nombre_completo_paciente = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    email = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    direccion = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    fecha_nacimiento = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    telefono = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    historial_clinicoid_hc = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Historiales", x => x.id_hc);
+                    table.PrimaryKey("PK_Pacientes", x => x.id_paciente);
                     table.ForeignKey(
-                        name: "FK_Historiales_Pacientes_pacienteusuario_paciente",
-                        column: x => x.pacienteusuario_paciente,
-                        principalTable: "Pacientes",
-                        principalColumn: "usuario_paciente",
+                        name: "FK_Pacientes_Historiales_historial_clinicoid_hc",
+                        column: x => x.historial_clinicoid_hc,
+                        principalTable: "Historiales",
+                        principalColumn: "id_hc",
                         onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "Recordatorios",
-                columns: table => new
-                {
-                    id_recordatorio = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    pacienteusuario_paciente = table.Column<string>(type: "nvarchar(450)", nullable: true),
-                    profesionalusuario_profesional = table.Column<string>(type: "nvarchar(450)", nullable: true),
-                    mensaje = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    fechaEntrega = table.Column<DateTime>(type: "datetime2", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Recordatorios", x => x.id_recordatorio);
-                    table.ForeignKey(
-                        name: "FK_Recordatorios_Pacientes_pacienteusuario_paciente",
-                        column: x => x.pacienteusuario_paciente,
-                        principalTable: "Pacientes",
-                        principalColumn: "usuario_paciente");
-                    table.ForeignKey(
-                        name: "FK_Recordatorios_Profesionales_profesionalusuario_profesional",
-                        column: x => x.profesionalusuario_profesional,
-                        principalTable: "Profesionales",
-                        principalColumn: "usuario_profesional");
                 });
 
             migrationBuilder.CreateTable(
@@ -114,6 +90,33 @@ namespace GestionAgenda.Migrations
                         principalTable: "Profesionales",
                         principalColumn: "usuario_profesional",
                         onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Recordatorios",
+                columns: table => new
+                {
+                    id_recordatorio = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    pacienteid_paciente = table.Column<int>(type: "int", nullable: false),
+                    profesionalusuario_profesional = table.Column<string>(type: "nvarchar(450)", nullable: true),
+                    mensaje = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    fechaEntrega = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Recordatorios", x => x.id_recordatorio);
+                    table.ForeignKey(
+                        name: "FK_Recordatorios_Pacientes_pacienteid_paciente",
+                        column: x => x.pacienteid_paciente,
+                        principalTable: "Pacientes",
+                        principalColumn: "id_paciente",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_Recordatorios_Profesionales_profesionalusuario_profesional",
+                        column: x => x.profesionalusuario_profesional,
+                        principalTable: "Profesionales",
+                        principalColumn: "usuario_profesional");
                 });
 
             migrationBuilder.CreateTable(
@@ -152,14 +155,21 @@ namespace GestionAgenda.Migrations
                 column: "profesionalusuario_profesional");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Historiales_pacienteusuario_paciente",
-                table: "Historiales",
-                column: "pacienteusuario_paciente");
+                name: "IX_Pacientes_historial_clinicoid_hc",
+                table: "Pacientes",
+                column: "historial_clinicoid_hc",
+                unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_Recordatorios_pacienteusuario_paciente",
+                name: "IX_Pacientes_usuario_paciente",
+                table: "Pacientes",
+                column: "usuario_paciente",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Recordatorios_pacienteid_paciente",
                 table: "Recordatorios",
-                column: "pacienteusuario_paciente");
+                column: "pacienteid_paciente");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Recordatorios_profesionalusuario_profesional",
@@ -180,13 +190,13 @@ namespace GestionAgenda.Migrations
                 name: "Citas");
 
             migrationBuilder.DropTable(
-                name: "Historiales");
+                name: "Pacientes");
 
             migrationBuilder.DropTable(
                 name: "Profesionales");
 
             migrationBuilder.DropTable(
-                name: "Pacientes");
+                name: "Historiales");
         }
     }
 }

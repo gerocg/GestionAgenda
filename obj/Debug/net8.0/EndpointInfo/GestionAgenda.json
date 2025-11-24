@@ -232,6 +232,51 @@
   },
   "components": {
     "schemas": {
+      "Cita": {
+        "type": "object",
+        "properties": {
+          "id_cita": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "hc": {
+            "$ref": "#/components/schemas/HistorialClinico"
+          },
+          "profesional": {
+            "$ref": "#/components/schemas/Profesional"
+          },
+          "fechaAgendado": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "fechaRealizada": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "comentario": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "HistorialClinico": {
+        "type": "object",
+        "properties": {
+          "id_hc": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "citas": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Cita"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "LoginDTO": {
         "type": "object",
         "properties": {
@@ -249,6 +294,10 @@
       "Paciente": {
         "type": "object",
         "properties": {
+          "id_paciente": {
+            "type": "integer",
+            "format": "int32"
+          },
           "usuario_paciente": {
             "type": "string",
             "nullable": true
@@ -274,6 +323,35 @@
             "format": "date-time"
           },
           "telefono": {
+            "type": "string",
+            "nullable": true
+          },
+          "historial_clinicoid_hc": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "historial_clinico": {
+            "$ref": "#/components/schemas/HistorialClinico"
+          }
+        },
+        "additionalProperties": false
+      },
+      "Profesional": {
+        "type": "object",
+        "properties": {
+          "usuario_profesional": {
+            "type": "string",
+            "nullable": true
+          },
+          "contrasenia_profesional": {
+            "type": "string",
+            "nullable": true
+          },
+          "nombre_completo_profesional": {
+            "type": "string",
+            "nullable": true
+          },
+          "profesion": {
             "type": "string",
             "nullable": true
           }
