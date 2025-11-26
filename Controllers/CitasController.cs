@@ -1,83 +1,130 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using GestionAgenda.Context;
+using GestionAgenda.Modelo;
 
 namespace GestionAgenda.Controllers
 {
-    public class CitasController : Controller
+    [Route("api/[controller]")]
+    [ApiController]
+    public class CitasController : ControllerBase
     {
-        // GET: CitasController
-        public ActionResult Index()
+        private readonly ContextBd _context;
+
+        public CitasController(ContextBd context)
         {
-            return View();
+            _context = context;
         }
 
-        // GET: CitasController/Details/5
-        public ActionResult Details(int id)
+        // GET: api/Citas
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<Cita>>> GetCitas()
         {
-            return View();
+            return await _context.Citas.ToListAsync();
         }
 
-        // GET: CitasController/Create
-        public ActionResult Create()
+        [HttpGet("filtrar")]
+        public async Task<ActionResult<IEnumerable<Cita>>> Filtrar(
+            [FromQuery] int? profesional,
+            [FromQuery] DateTime? desde,
+            [FromQuery] DateTime? hasta)
         {
-            return View();
+            var query = _context.Citas
+                .Include(c => c.profesional)
+                .AsQueryable();
+
+            if (profesional.HasValue)
+                query = query.Where(c => c.idProfesional == profesional.Value);
+
+            if (desde.HasValue)
+                query = query.Where(c => c.fechaAgendado >= desde.Value);
+
+            if (hasta.HasValue)
+                query = query.Where(c => c.fechaAgendado <= hasta.Value);
+
+            return Ok(await query.ToListAsync());
         }
 
-        // POST: CitasController/Create
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public ActionResult Create(IFormCollection collection)
+        // GET: api/Citas/5
+        [HttpGet("{id}")]
+        public async Task<ActionResult<Cita>> GetCita(int id)
         {
+            var cita = await _context.Citas.FindAsync(id);
+
+            if (cita == null)
+            {
+                return NotFound();
+            }
+
+            return cita;
+        }
+
+        // PUT: api/Citas/5
+        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+        [HttpPut("{id}")]
+        public async Task<IActionResult> PutCita(int id, Cita cita)
+        {
+            if (id != cita.id_cita)
+            {
+                return BadRequest();
+            }
+
+            _context.Entry(cita).State = EntityState.Modified;
+
             try
             {
-                return RedirectToAction(nameof(Index));
+                await _context.SaveChangesAsync();
             }
-            catch
+            catch (DbUpdateConcurrencyException)
             {
-                return View();
+                if (!CitaExists(id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
             }
+
+            return NoContent();
         }
 
-        // GET: CitasController/Edit/5
-        public ActionResult Edit(int id)
-        {
-            return View();
-        }
-
-        // POST: CitasController/Edit/5
+        // POST: api/Citas
+        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        [ValidateAntiForgeryToken]
-        public ActionResult Edit(int id, IFormCollection collection)
+        public async Task<ActionResult<Cita>> PostCita(Cita cita)
         {
-            try
-            {
-                return RedirectToAction(nameof(Index));
-            }
-            catch
-            {
-                return View();
-            }
+            _context.Citas.Add(cita);
+            await _context.SaveChangesAsync();
+
+            return CreatedAtAction("GetCita", new { id = cita.id_cita }, cita);
         }
 
-        // GET: CitasController/Delete/5
-        public ActionResult Delete(int id)
+        // DELETE: api/Citas/5
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteCita(int id)
         {
-            return View();
+            var cita = await _context.Citas.FindAsync(id);
+            if (cita == null)
+            {
+                return NotFound();
+            }
+
+            _context.Citas.Remove(cita);
+            await _context.SaveChangesAsync();
+
+            return NoContent();
         }
 
-        // POST: CitasController/Delete/5
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public ActionResult Delete(int id, IFormCollection collection)
+        private bool CitaExists(int id)
         {
-            try
-            {
-                return RedirectToAction(nameof(Index));
-            }
-            catch
-            {
-                return View();
-            }
+            return _context.Citas.Any(e => e.id_cita == id);
         }
     }
 }
