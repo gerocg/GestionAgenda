@@ -50,6 +50,40 @@ namespace GestionAgenda.Controllers
             return Ok(await query.ToListAsync());
         }
 
+        [HttpPost("subir-archivo/{citaId}")]
+        public async Task<IActionResult> SubirArchivo(int citaId, IFormFile archivo)
+        {
+            if (archivo == null || archivo.Length == 0)
+                return BadRequest("Archivo vacío");
+
+            // 1. Definir carpeta de guardado
+            var carpeta = Path.Combine("uploads", citaId.ToString());
+            if (!Directory.Exists(carpeta))
+                Directory.CreateDirectory(carpeta);
+
+            // 2. Guardar archivo físicamente
+            var rutaArchivo = Path.Combine(carpeta, archivo.FileName);
+            using (var stream = new FileStream(rutaArchivo, FileMode.Create))
+            {
+                await archivo.CopyToAsync(stream);
+            }
+
+            // 3. Guardar referencia en la base de datos
+            var adjunto = new Archivo
+            {
+                idCita = citaId,
+                nombreARchivo = archivo.FileName,
+                tipoArchivo = archivo.ContentType,
+                rutaArchivo = "/" + rutaArchivo.Replace("\\", "/"),
+                fechaSubida = DateTime.UtcNow
+            };
+
+            _context.Archivos.Add(adjunto);
+            await _context.SaveChangesAsync();
+
+            return Ok("Archivo subido correctamente");
+        }
+
         // GET: api/Citas/5
         [HttpGet("{id}")]
         public async Task<ActionResult<Cita>> GetCita(int id)

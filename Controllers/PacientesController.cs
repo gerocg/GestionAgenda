@@ -46,6 +46,44 @@ namespace GestionAgenda.Controllers
             return paciente;
         }
 
+        // GET: api/Pacientes/filtrar
+        [HttpGet("filtrar")]
+        public async Task<ActionResult<IEnumerable<Paciente>>> Filtrar(
+            [FromQuery] string? nombre,
+            [FromQuery] string? email,
+            [FromQuery] string? direccion,
+            [FromQuery] DateTime? nacidoAntes,
+            [FromQuery] DateTime? nacidoDespues,
+            [FromQuery] string? telefono)
+        {
+            var query = _context.Pacientes.AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(nombre))
+                query = query.Where(p => p.nombre_completo_paciente.Contains(nombre));
+
+            if (!string.IsNullOrWhiteSpace(email))
+                query = query.Where(p => p.email.Contains(email));
+
+            if (!string.IsNullOrWhiteSpace(direccion))
+                query = query.Where(p => p.direccion.Contains(direccion));
+
+            if (nacidoAntes.HasValue)
+                query = query.Where(p => p.fecha_nacimiento < nacidoAntes.Value);
+
+            if (nacidoDespues.HasValue)
+                query = query.Where(p => p.fecha_nacimiento > nacidoDespues.Value);
+
+            if (!string.IsNullOrWhiteSpace(telefono))
+                query = query.Where(p => p.telefono.Contains(telefono));
+
+            var pacientes = await query.ToListAsync();
+
+            if (!pacientes.Any())
+                return NotFound("No se encontraron pacientes con esos filtros.");
+
+            return Ok(pacientes);
+        }
+
         // PUT: api/Pacientes/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]

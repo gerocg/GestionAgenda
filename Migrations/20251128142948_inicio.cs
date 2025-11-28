@@ -1,4 +1,5 @@
 ﻿using System;
+using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -6,50 +7,65 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace GestionAgenda.Migrations
 {
     /// <inheritdoc />
-    public partial class Aaa : Migration
+    public partial class inicio : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.AlterDatabase()
+                .Annotation("MySql:CharSet", "utf8mb4");
+
             migrationBuilder.CreateTable(
                 name: "Historiales",
                 columns: table => new
                 {
                     id_hc = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1")
+                        .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Historiales", x => x.id_hc);
-                });
+                })
+                .Annotation("MySql:CharSet", "utf8mb4");
 
             migrationBuilder.CreateTable(
                 name: "Profesionales",
                 columns: table => new
                 {
-                    usuario_profesional = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    contrasenia_profesional = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    nombre_completo_profesional = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    profesion = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                    usuario_profesional = table.Column<string>(type: "varchar(255)", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    contrasenia_profesional = table.Column<string>(type: "longtext", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    nombre_completo_profesional = table.Column<string>(type: "longtext", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    profesion = table.Column<string>(type: "longtext", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4")
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Profesionales", x => x.usuario_profesional);
-                });
+                })
+                .Annotation("MySql:CharSet", "utf8mb4");
 
             migrationBuilder.CreateTable(
                 name: "Pacientes",
                 columns: table => new
                 {
                     id_paciente = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    usuario_paciente = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    contrasenia_paciente = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    nombre_completo_paciente = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    email = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    direccion = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    fecha_nacimiento = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    telefono = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                        .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
+                    usuario_paciente = table.Column<string>(type: "varchar(255)", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    contrasenia_paciente = table.Column<string>(type: "longtext", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    nombre_completo_paciente = table.Column<string>(type: "longtext", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    email = table.Column<string>(type: "longtext", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    direccion = table.Column<string>(type: "longtext", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    fecha_nacimiento = table.Column<DateTime>(type: "datetime(6)", nullable: false),
+                    telefono = table.Column<string>(type: "longtext", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
                     historial_clinicoid_hc = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
@@ -61,19 +77,24 @@ namespace GestionAgenda.Migrations
                         principalTable: "Historiales",
                         principalColumn: "id_hc",
                         onDelete: ReferentialAction.Cascade);
-                });
+                })
+                .Annotation("MySql:CharSet", "utf8mb4");
 
             migrationBuilder.CreateTable(
                 name: "Citas",
                 columns: table => new
                 {
                     id_cita = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
+                        .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
+                    idHistorialClinico = table.Column<int>(type: "int", nullable: false),
                     hcid_hc = table.Column<int>(type: "int", nullable: false),
-                    profesionalusuario_profesional = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    fechaAgendado = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    fechaRealizada = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    comentario = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                    idProfesional = table.Column<int>(type: "int", nullable: false),
+                    profesionalusuario_profesional = table.Column<string>(type: "varchar(255)", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    fechaAgendado = table.Column<DateTime>(type: "datetime(6)", nullable: false),
+                    fechaRealizada = table.Column<DateTime>(type: "datetime(6)", nullable: false),
+                    comentario = table.Column<string>(type: "longtext", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4")
                 },
                 constraints: table =>
                 {
@@ -90,18 +111,21 @@ namespace GestionAgenda.Migrations
                         principalTable: "Profesionales",
                         principalColumn: "usuario_profesional",
                         onDelete: ReferentialAction.Cascade);
-                });
+                })
+                .Annotation("MySql:CharSet", "utf8mb4");
 
             migrationBuilder.CreateTable(
                 name: "Recordatorios",
                 columns: table => new
                 {
                     id_recordatorio = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
+                        .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
                     pacienteid_paciente = table.Column<int>(type: "int", nullable: false),
-                    profesionalusuario_profesional = table.Column<string>(type: "nvarchar(450)", nullable: true),
-                    mensaje = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    fechaEntrega = table.Column<DateTime>(type: "datetime2", nullable: false)
+                    profesionalusuario_profesional = table.Column<string>(type: "varchar(255)", nullable: true)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    mensaje = table.Column<string>(type: "longtext", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    fechaEntrega = table.Column<DateTime>(type: "datetime(6)", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -117,16 +141,24 @@ namespace GestionAgenda.Migrations
                         column: x => x.profesionalusuario_profesional,
                         principalTable: "Profesionales",
                         principalColumn: "usuario_profesional");
-                });
+                })
+                .Annotation("MySql:CharSet", "utf8mb4");
 
             migrationBuilder.CreateTable(
                 name: "Archivos",
                 columns: table => new
                 {
                     id_archivo = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
+                        .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
+                    idCita = table.Column<int>(type: "int", nullable: false),
                     citaid_cita = table.Column<int>(type: "int", nullable: false),
-                    rutaArchivo = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                    rutaArchivo = table.Column<string>(type: "longtext", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    nombreARchivo = table.Column<string>(type: "longtext", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    tipoArchivo = table.Column<string>(type: "longtext", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    fechaSubida = table.Column<DateTime>(type: "datetime(6)", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -137,7 +169,8 @@ namespace GestionAgenda.Migrations
                         principalTable: "Citas",
                         principalColumn: "id_cita",
                         onDelete: ReferentialAction.Cascade);
-                });
+                })
+                .Annotation("MySql:CharSet", "utf8mb4");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Archivos_citaid_cita",

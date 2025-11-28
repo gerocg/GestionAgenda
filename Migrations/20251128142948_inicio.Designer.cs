@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace GestionAgenda.Migrations
 {
     [DbContext(typeof(ContextBd))]
-    [Migration("20251123215033_Aaa")]
-    partial class Aaa
+    [Migration("20251128142948_inicio")]
+    partial class inicio
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -21,9 +21,9 @@ namespace GestionAgenda.Migrations
 #pragma warning disable 612, 618
             modelBuilder
                 .HasAnnotation("ProductVersion", "9.0.10")
-                .HasAnnotation("Relational:MaxIdentifierLength", 128);
+                .HasAnnotation("Relational:MaxIdentifierLength", 64);
 
-            SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
+            MySqlModelBuilderExtensions.AutoIncrementColumns(modelBuilder);
 
             modelBuilder.Entity("GestionAgenda.Modelo.Archivo", b =>
                 {
@@ -31,14 +31,28 @@ namespace GestionAgenda.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("id_archivo"));
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("id_archivo"));
 
                     b.Property<int>("citaid_cita")
                         .HasColumnType("int");
 
+                    b.Property<DateTime>("fechaSubida")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int>("idCita")
+                        .HasColumnType("int");
+
+                    b.Property<string>("nombreARchivo")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
                     b.Property<string>("rutaArchivo")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("tipoArchivo")
+                        .IsRequired()
+                        .HasColumnType("longtext");
 
                     b.HasKey("id_archivo");
 
@@ -53,24 +67,30 @@ namespace GestionAgenda.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("id_cita"));
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("id_cita"));
 
                     b.Property<string>("comentario")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("longtext");
 
                     b.Property<DateTime>("fechaAgendado")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("datetime(6)");
 
                     b.Property<DateTime>("fechaRealizada")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("datetime(6)");
 
                     b.Property<int>("hcid_hc")
                         .HasColumnType("int");
 
+                    b.Property<int>("idHistorialClinico")
+                        .HasColumnType("int");
+
+                    b.Property<int>("idProfesional")
+                        .HasColumnType("int");
+
                     b.Property<string>("profesionalusuario_profesional")
                         .IsRequired()
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("varchar(255)");
 
                     b.HasKey("id_cita");
 
@@ -87,7 +107,7 @@ namespace GestionAgenda.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("id_hc"));
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("id_hc"));
 
                     b.HasKey("id_hc");
 
@@ -100,37 +120,37 @@ namespace GestionAgenda.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("id_paciente"));
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("id_paciente"));
 
                     b.Property<string>("contrasenia_paciente")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("longtext");
 
                     b.Property<string>("direccion")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("longtext");
 
                     b.Property<string>("email")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("longtext");
 
                     b.Property<DateTime>("fecha_nacimiento")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("datetime(6)");
 
                     b.Property<int>("historial_clinicoid_hc")
                         .HasColumnType("int");
 
                     b.Property<string>("nombre_completo_paciente")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("longtext");
 
                     b.Property<string>("telefono")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("longtext");
 
                     b.Property<string>("usuario_paciente")
                         .IsRequired()
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("varchar(255)");
 
                     b.HasKey("id_paciente");
 
@@ -146,19 +166,19 @@ namespace GestionAgenda.Migrations
             modelBuilder.Entity("GestionAgenda.Modelo.Profesional", b =>
                 {
                     b.Property<string>("usuario_profesional")
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("varchar(255)");
 
                     b.Property<string>("contrasenia_profesional")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("longtext");
 
                     b.Property<string>("nombre_completo_profesional")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("longtext");
 
                     b.Property<string>("profesion")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("longtext");
 
                     b.HasKey("usuario_profesional");
 
@@ -171,20 +191,20 @@ namespace GestionAgenda.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("id_recordatorio"));
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("id_recordatorio"));
 
                     b.Property<DateTime>("fechaEntrega")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("datetime(6)");
 
                     b.Property<string>("mensaje")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("longtext");
 
                     b.Property<int>("pacienteid_paciente")
                         .HasColumnType("int");
 
                     b.Property<string>("profesionalusuario_profesional")
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("varchar(255)");
 
                     b.HasKey("id_recordatorio");
 
