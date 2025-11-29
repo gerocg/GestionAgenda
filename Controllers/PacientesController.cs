@@ -9,6 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Identity;
 
 namespace GestionAgenda.Controllers
 {
@@ -63,9 +64,6 @@ namespace GestionAgenda.Controllers
 
             if (!string.IsNullOrWhiteSpace(email))
                 query = query.Where(p => p.email.Contains(email));
-
-            if (!string.IsNullOrWhiteSpace(direccion))
-                query = query.Where(p => p.direccion.Contains(direccion));
 
             if (nacidoAntes.HasValue)
                 query = query.Where(p => p.fecha_nacimiento < nacidoAntes.Value);
@@ -154,16 +152,17 @@ namespace GestionAgenda.Controllers
                 .FirstOrDefaultAsync(p => p.usuario_paciente == login.usuario_paciente);
 
             // Compara contraseñas (por ahora sin encriptar)
-            if (paciente.contrasenia_paciente != login.contrasenia_paciente)
-            {
-                return BadRequest("Datos incorrectos.");
-            }
+            if (paciente == null) return NotFound("Datos incorrectos.");
 
-            // Generar token JWT
+            var hasher = new PasswordHasher<Paciente>();
+            var resultado = hasher.VerifyHashedPassword(paciente, paciente.contrasenia_paciente, login.contrasenia_paciente);
+
+            if (resultado == PasswordVerificationResult.Failed) return BadRequest("Datos incorrectos.");
+
             var token = _jwt.GenerateToken(
-                paciente.usuario_paciente, // userId
-                paciente.email             // email
-            );
+                paciente.usuario_paciente,
+                paciente.email);
+
 
             // Si todo va bien, devolvemos el token
             return Ok(new{token});
@@ -172,7 +171,7 @@ namespace GestionAgenda.Controllers
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegistroDTO registro)
         {
-            if (PacienteExists(registro.usuario_paciente) == true)
+            if (PacienteExists(registro.email) == true)
             {
                 return Conflict("Usuario ya existente.");
             }
@@ -180,14 +179,15 @@ namespace GestionAgenda.Controllers
             // Crea al usuario con los datos ingresados
             var paciente = new Paciente
             {
-                usuario_paciente = registro.usuario_paciente,
-                contrasenia_paciente = registro.contrasenia_paciente,
+                usuario_paciente = registro.email,
                 nombre_completo_paciente = registro.nombre_completo_paciente,
                 email = registro.email,
-                direccion = registro.direccion,
                 fecha_nacimiento = registro.fecha_nacimiento,
                 telefono = registro.telefono
             };
+
+            var hasher = new PasswordHasher<Paciente>();
+            paciente.contrasenia_paciente = hasher.HashPassword(paciente, registro.contrasenia_paciente);
 
             _context.Pacientes.Add(paciente);
 
