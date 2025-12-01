@@ -14,6 +14,7 @@ namespace GestionAgenda.Modelo
         public String telefono { get; set; }
         public int historial_clinicoid_hc { get; set; }
         public HistorialClinico historial_clinico { get; set; }
+        public bool requiere_cambio_contrasena { get; set; } = false;
 
         public Paciente() { 
             this.historial_clinico = new HistorialClinico();

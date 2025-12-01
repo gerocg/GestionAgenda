@@ -2,14 +2,20 @@
 using GestionAgenda.DTOs;
 using GestionAgenda.Modelo;
 using GestionAgenda.Services;
+using MailKit.Net.Smtp;
+using MailKit.Security;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using MimeKit;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Identity;
 
 namespace GestionAgenda.Controllers
 {
@@ -19,21 +25,25 @@ namespace GestionAgenda.Controllers
     {
         private readonly ContextBd _context;
         private readonly JwtService _jwt;
+        private readonly IConfiguration _config;
 
-        public PacientesController(ContextBd context, JwtService jwt)
+        public PacientesController(ContextBd context, JwtService jwt, IConfiguration config)
         {
             _context = context;
             _jwt = jwt;
+            _config = config;
         }
 
         // GET: api/Pacientes
         [HttpGet]
+        [Authorize]
         public async Task<ActionResult<IEnumerable<Paciente>>> GetPacientes()
         {
             return await _context.Pacientes.ToListAsync();
         }
 
         // GET: api/Pacientes/5
+        [Authorize]
         [HttpGet("{id}")]
         public async Task<ActionResult<Paciente>> GetPaciente(string id)
         {
@@ -48,6 +58,7 @@ namespace GestionAgenda.Controllers
         }
 
         // GET: api/Pacientes/filtrar
+        [Authorize]
         [HttpGet("filtrar")]
         public async Task<ActionResult<IEnumerable<Paciente>>> Filtrar(
             [FromQuery] string? nombre,
@@ -83,7 +94,7 @@ namespace GestionAgenda.Controllers
         }
 
         // PUT: api/Pacientes/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+        [Authorize]
         [HttpPut("{id}")]
         public async Task<IActionResult> PutPaciente(string id, Paciente paciente)
         {
@@ -114,7 +125,6 @@ namespace GestionAgenda.Controllers
         }
 
         // POST: api/Pacientes
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
         public async Task<ActionResult<Paciente>> PostPaciente(Paciente paciente)
         {
@@ -164,8 +174,8 @@ namespace GestionAgenda.Controllers
                 paciente.email);
 
 
-            // Si todo va bien, devolvemos el token
-            return Ok(new{token});
+            // Si todo va bien, devolvemos el token y si requiere cambio de contrasena
+            return Ok(new{token, requiereCambioContrasenia = paciente.requiere_cambio_contrasena });
         }
 
         [HttpPost("register")]
@@ -207,6 +217,106 @@ namespace GestionAgenda.Controllers
         private bool PacienteExists(string id)
         {
             return _context.Pacientes.Any(e => e.usuario_paciente == id);
+        }
+
+
+        [HttpPost("recuperarContrasena")]
+        public async Task<IActionResult> RecuperarContrasenia([FromBody] RecuperarEmailDTO dto)
+        {
+            var paciente = await _context.Pacientes
+                .FirstOrDefaultAsync(p => p.email == dto.email);
+
+            if (paciente == null)
+                return Ok();
+
+            var nuevaPassword = GenerarContraseniaTemporal();
+
+            var hasher = new PasswordHasher<Paciente>();
+            paciente.contrasenia_paciente = hasher.HashPassword(paciente, nuevaPassword);
+
+            paciente.requiere_cambio_contrasena = true;
+
+            await _context.SaveChangesAsync();
+
+            await EnviarContraseniaTemporal(
+                paciente.email,
+                paciente.nombre_completo_paciente,
+                nuevaPassword
+            );
+
+            return Ok();
+        }
+
+        [Authorize]
+        [HttpPost("cambiarContrasenia")]
+        public async Task<IActionResult> CambiarContrasenia([FromBody] CambiarContraseniaDTO dto)
+        {
+            var usuario = User.Identity?.Name;
+
+            if (string.IsNullOrEmpty(usuario))
+                return Unauthorized();
+
+            var paciente = await _context.Pacientes
+                .FirstOrDefaultAsync(x => x.usuario_paciente == usuario);
+
+            if (paciente == null)
+                return Unauthorized();
+
+            var hasher = new PasswordHasher<Paciente>();
+
+            paciente.contrasenia_paciente =
+                hasher.HashPassword(paciente, dto.nueva_contrasenia);
+
+            paciente.requiere_cambio_contrasena = false;
+
+            await _context.SaveChangesAsync();
+
+            return Ok();
+        }
+
+
+        private static string GenerarContraseniaTemporal(int length = 10)
+        {
+            const string valid = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789@$";
+            var bytes = new byte[length];
+            RandomNumberGenerator.Fill(bytes);
+
+            return new string(bytes.Select(b => valid[b % valid.Length]).ToArray());
+        }
+
+        private async Task EnviarContraseniaTemporal(string email, string nombre, string password)
+        {
+            var message = new MimeMessage();
+            message.From.Add(new MailboxAddress("Gestion Agenda", "no-reply@tuapp.com"));
+            message.To.Add(new MailboxAddress(nombre, email));
+            message.Subject = "Recuperación de contraseña";
+
+            message.Body = new TextPart("html")
+            {
+                Text = $"""
+                    <h3>Hola {nombre}</h3>
+                    <p>Tu nueva contraseña temporal es:</p>
+                    <h2>{password}</h2>
+                    <p>Ingresá al sistema y se te pedirá que la cambies.</p>
+                """
+            };
+
+            using var smtp = new SmtpClient();
+
+            await smtp.ConnectAsync(
+                "smtp.gmail.com",
+                587,
+                SecureSocketOptions.StartTls
+            );
+
+            await smtp.AuthenticateAsync(
+               _config["Smtp:User"],
+               _config["Smtp:Pass"]
+            );
+
+            await smtp.SendAsync(message);
+
+            await smtp.DisconnectAsync(true);
         }
     }
 }

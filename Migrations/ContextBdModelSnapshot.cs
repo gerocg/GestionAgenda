@@ -137,6 +137,9 @@ namespace GestionAgenda.Migrations
                         .IsRequired()
                         .HasColumnType("longtext");
 
+                    b.Property<bool>("requiere_cambio_contrasena")
+                        .HasColumnType("tinyint(1)");
+
                     b.Property<string>("telefono")
                         .IsRequired()
                         .HasColumnType("longtext");

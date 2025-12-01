@@ -18,6 +18,7 @@ namespace GestionAgenda.Services
         {
             var claims = new[]
             {
+                new Claim(ClaimTypes.Name, userId),
                 new Claim(JwtRegisteredClaimNames.Sub, userId),
                 new Claim(JwtRegisteredClaimNames.Email, email),
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
