@@ -1,6 +1,6 @@
 ﻿namespace GestionAgenda.DTOs
 {
-    public class RegistroDTO
+    public class PacienteDTO
     {
         public String nombre_completo_paciente { get; set; }
         public String contrasenia_paciente { get; set; }

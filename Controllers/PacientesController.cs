@@ -1,5 +1,6 @@
 ﻿using GestionAgenda.Context;
 using GestionAgenda.DTOs;
+using GestionAgenda.Interfaces;
 using GestionAgenda.Modelo;
 using GestionAgenda.Services;
 using MailKit.Net.Smtp;
@@ -13,6 +14,7 @@ using Microsoft.EntityFrameworkCore;
 using MimeKit;
 using System;
 using System.Collections.Generic;
+using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Threading.Tasks;
@@ -26,12 +28,14 @@ namespace GestionAgenda.Controllers
         private readonly ContextBd _context;
         private readonly JwtService _jwt;
         private readonly IConfiguration _config;
+        private readonly IPacienteService _pacienteService;
 
-        public PacientesController(ContextBd context, JwtService jwt, IConfiguration config)
+        public PacientesController(ContextBd context, JwtService jwt, IConfiguration config, IPacienteService pacienteService)
         {
             _context = context;
             _jwt = jwt;
             _config = config;
+            _pacienteService = pacienteService;
         }
 
         // GET: api/Pacientes
@@ -124,6 +128,23 @@ namespace GestionAgenda.Controllers
             return NoContent();
         }
 
+        [Authorize]
+        [HttpGet("me")]
+        public IActionResult Me()
+        {
+            var userId = User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
+
+            if (string.IsNullOrEmpty(userId))
+                return Unauthorized();
+
+            var paciente = _pacienteService.GetById(int.Parse(userId));
+
+            if (paciente == null)
+                return NotFound();
+
+            return Ok(paciente);
+        }
+
         // POST: api/Pacientes
         [HttpPost]
         public async Task<ActionResult<Paciente>> PostPaciente(Paciente paciente)
@@ -179,7 +200,7 @@ namespace GestionAgenda.Controllers
         }
 
         [HttpPost("register")]
-        public async Task<IActionResult> Register([FromBody] RegistroDTO registro)
+        public async Task<IActionResult> Register([FromBody] PacienteDTO registro)
         {
             if (PacienteExists(registro.email) == true)
             {

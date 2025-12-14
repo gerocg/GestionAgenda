@@ -1,8 +1,8 @@
 using GestionAgenda.Context;
+using GestionAgenda.Interfaces;
 using GestionAgenda.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using Pomelo.EntityFrameworkCore.MySql;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -22,6 +22,7 @@ builder.Services.AddCors(options =>
                    .AllowAnyHeader();
         });
 });
+builder.Services.AddScoped<IPacienteService, PacienteService>();
 builder.Services.AddAuthentication("Bearer")
     .AddJwtBearer(options =>
     {

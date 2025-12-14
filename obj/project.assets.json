@@ -8160,23 +8160,23 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\facun\\.nuget\\packages\\": {},
+    "C:\\Users\\Gerónimo\\.nuget\\packages\\": {},
     "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\facun\\GestionAgenda\\GestionAgenda.csproj",
+      "projectUniqueName": "C:\\Users\\Gerónimo\\source\\repos\\GestionAgenda\\GestionAgenda\\GestionAgenda.csproj",
       "projectName": "GestionAgenda",
-      "projectPath": "C:\\Users\\facun\\GestionAgenda\\GestionAgenda.csproj",
-      "packagesPath": "C:\\Users\\facun\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\facun\\GestionAgenda\\obj\\",
+      "projectPath": "C:\\Users\\Gerónimo\\source\\repos\\GestionAgenda\\GestionAgenda\\GestionAgenda.csproj",
+      "packagesPath": "C:\\Users\\Gerónimo\\.nuget\\packages\\",
+      "outputPath": "C:\\Users\\Gerónimo\\source\\repos\\GestionAgenda\\GestionAgenda\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
       ],
       "configFilePaths": [
-        "C:\\Users\\facun\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Users\\Gerónimo\\AppData\\Roaming\\NuGet\\NuGet.Config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
       ],
@@ -8203,7 +8203,7 @@
         "auditLevel": "low",
         "auditMode": "direct"
       },
-      "SdkAnalysisLevel": "10.0.100"
+      "SdkAnalysisLevel": "9.0.300"
     },
     "frameworks": {
       "net8.0": {
@@ -8259,24 +8259,6 @@
         ],
         "assetTargetFallback": true,
         "warn": true,
-        "downloadDependencies": [
-          {
-            "name": "Microsoft.AspNetCore.App.Ref",
-            "version": "[8.0.22, 8.0.22]"
-          },
-          {
-            "name": "Microsoft.NETCore.App.Host.win-x64",
-            "version": "[8.0.22, 8.0.22]"
-          },
-          {
-            "name": "Microsoft.NETCore.App.Ref",
-            "version": "[8.0.22, 8.0.22]"
-          },
-          {
-            "name": "Microsoft.WindowsDesktop.App.Ref",
-            "version": "[8.0.22, 8.0.22]"
-          }
-        ],
         "frameworkReferences": {
           "Microsoft.AspNetCore.App": {
             "privateAssets": "none"
@@ -8285,7 +8267,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.100/PortableRuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.306/PortableRuntimeIdentifierGraph.json"
       }
     }
   }
