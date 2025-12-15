@@ -52,7 +52,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseCors("AllowAll");
 
-app.UseHttpsRedirection();
+//app.UseHttpsRedirection(); - Comentado para deploy en AWS
 
 app.UseAuthentication();
 
