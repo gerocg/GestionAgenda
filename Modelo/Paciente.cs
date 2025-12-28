@@ -5,19 +5,12 @@ namespace GestionAgenda.Modelo
     public class Paciente
     {
         [Key]
-        public int id_paciente { get; set; }
-        public String usuario_paciente { get; set; }
-        public String contrasenia_paciente { get; set; }
-        public String nombre_completo_paciente { get; set; }
-        public String email { get; set; }
-        public DateTime fecha_nacimiento { get; set; }
-        public String telefono { get; set; }
-        public int historial_clinicoid_hc { get; set; }
-        public HistorialClinico historial_clinico { get; set; }
-        public bool requiere_cambio_contrasena { get; set; } = false;
-
-        public Paciente() { 
-            this.historial_clinico = new HistorialClinico();
-        }
+        public int Id { get; set; }
+        public int UsuarioId { get; set; }
+        public Usuario Usuario { get; set; }
+        public DateTime FechaNacimiento { get; set; }
+        public string? Telefono { get; set; }
+        public string? Direccion { get; set; }
+        public HistorialClinico HistorialClinico { get; set; } = new HistorialClinico();
     }
 }

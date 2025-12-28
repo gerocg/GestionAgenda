@@ -6,13 +6,13 @@ namespace GestionAgenda.Modelo
     public class Archivo
     {
         [Key]
-        public int id_archivo {  get; set; }
-        public int idCita { get; set; }
-        public Cita cita { get; set; }
-        public String rutaArchivo { get; set; }
-        public String nombreARchivo { get; set; }
-        public String tipoArchivo { get; set; }
-        public DateTime fechaSubida { get; set; }
+        public int Id {  get; set; }
+        public int CitaId { get; set; }
+        public Cita Cita { get; set; }
+        public string RutaArchivo { get; set; }
+        public string NombreArchivo { get; set; }
+        public string TipoArchivo { get; set; }
+        public DateTime FechaSubida { get; set; }
 
     }
 }

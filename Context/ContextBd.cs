@@ -7,6 +7,9 @@ namespace GestionAgenda.Context
     {
         public ContextBd(DbContextOptions<ContextBd> options) : base(options) { }
 
+        public DbSet<Usuario> Usuarios { get; set; }
+        public DbSet<Rol> Roles { get; set; }
+        public DbSet<UsuarioRol> UsuarioRoles { get; set; }
         public DbSet<Paciente> Pacientes { get; set; }
         public DbSet<Profesional> Profesionales { get; set; }
         public DbSet<HistorialClinico> Historiales { get; set; }
@@ -18,15 +21,29 @@ namespace GestionAgenda.Context
         {
             base.OnModelCreating(modelBuilder);
 
-            modelBuilder.Entity<Paciente>()
-            .HasIndex(p => p.usuario_paciente)
-            .IsUnique();
+            modelBuilder.Entity<UsuarioRol>()
+                .HasKey(ur => new { ur.UsuarioId, ur.RolId });
 
             modelBuilder.Entity<Paciente>()
-        .HasOne(p => p.historial_clinico)
-        .WithOne()
-        .HasForeignKey<Paciente>(p => p.historial_clinicoid_hc)
-        .OnDelete(DeleteBehavior.Cascade);
+                .HasOne(p => p.Usuario)
+                .WithOne(u => u.Paciente)
+                .HasForeignKey<Paciente>(p => p.UsuarioId);
+
+            modelBuilder.Entity<Profesional>()
+                .HasOne(p => p.Usuario)
+                .WithOne(u => u.Profesional)
+                .HasForeignKey<Profesional>(p => p.UsuarioId);
+            
+            modelBuilder.Entity<HistorialClinico>()
+                .HasOne(h => h.Paciente)
+                .WithOne(p => p.HistorialClinico)
+                .HasForeignKey<HistorialClinico>(h => h.PacienteId);
+
+            modelBuilder.Entity<Rol>().HasData(
+                new Rol { Id = 1, Nombre = "Paciente" },
+                new Rol { Id = 2, Nombre = "Profesional" },
+                new Rol { Id = 3, Nombre = "Admin" }
+            );
         }
 
 

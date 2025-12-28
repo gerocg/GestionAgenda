@@ -2,7 +2,7 @@
 {
     public class LoginDTO
     {
-        public string usuario_paciente { get; set; }
-        public string contrasenia_paciente { get; set; }
+        public string Email { get; set; }
+        public string Contrasenia { get; set; }
     }
 }

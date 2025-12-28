@@ -2,6 +2,6 @@
 {
     public class RecuperarEmailDTO
     {
-        public string email { get; set; }
+        public string Email { get; set; }
     }
 }

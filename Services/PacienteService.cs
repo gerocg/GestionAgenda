@@ -2,6 +2,7 @@
 using GestionAgenda.DTOs;
 using GestionAgenda.Interfaces;
 using GestionAgenda.Modelo;
+using Microsoft.EntityFrameworkCore;
 using System;
 
 namespace GestionAgenda.Services
@@ -17,18 +18,23 @@ namespace GestionAgenda.Services
 
         public Paciente GetById(int id)
         {
-            return _context.Pacientes.FirstOrDefault(p => p.id_paciente == id);
+            return _context.Pacientes.Include(p => p.Usuario).Include(p => p.HistorialClinico).FirstOrDefault(p => p.UsuarioId == id);
         }
 
         public void Update(int id, PacienteDTO dto)
         {
-            var paciente = _context.Pacientes.Find(id);
+            var paciente = _context.Pacientes.Include(p => p.Usuario).FirstOrDefault(p => p.UsuarioId == id);
+
             if (paciente == null) return;
 
-            paciente.nombre_completo_paciente = dto.nombre_completo_paciente;
-            paciente.email = dto.email;
-            paciente.telefono = dto.telefono;
-            paciente.fecha_nacimiento = dto.fecha_nacimiento;
+            // Datos del paciente
+            paciente.FechaNacimiento = dto.FechaNacimiento;
+            paciente.Telefono = dto.Telefono;
+            paciente.Direccion = dto.Direccion;
+
+            // Datos del usuario
+            paciente.Usuario.NombreCompleto = dto.NombreCompleto;
+            paciente.Usuario.Email = dto.Email;
 
             _context.SaveChanges();
         }

@@ -2,6 +2,6 @@
 {
     public class CambiarContraseniaDTO
     {
-        public string nueva_contrasenia { get; set; }
+        public string NuevaContrasenia { get; set; }
     }
 }

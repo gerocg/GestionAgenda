@@ -1,4 +1,5 @@
 using GestionAgenda.Context;
+using GestionAgenda.Interfaces;
 using GestionAgenda.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -70,6 +71,7 @@ builder.Services.AddAuthentication("Bearer")
     });
 
 builder.Services.AddScoped<JwtService>();
+builder.Services.AddScoped<IPacienteService, PacienteService>();
 
 var app = builder.Build();
 

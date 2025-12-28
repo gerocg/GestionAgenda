@@ -5,10 +5,10 @@ namespace GestionAgenda.Modelo
     public class Recordatorio
     {
         [Key]
-        public int id_recordatorio {  get; set; }
-        public Paciente paciente {  get; set; }
-        public Profesional profesional {  get; set; }
-        public String mensaje { get; set; }
-        public DateTime fechaEntrega { get; set; }
+        public int Id {  get; set; }
+        public Paciente Paciente {  get; set; }
+        public Profesional Profesional {  get; set; }
+        public string Mensaje { get; set; }
+        public DateTime FechaEntrega { get; set; }
     }
 }

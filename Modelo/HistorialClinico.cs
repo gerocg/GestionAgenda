@@ -6,7 +6,11 @@ namespace GestionAgenda.Modelo
     public class HistorialClinico
     {
         [Key]
-        public int id_hc {  get; set; }
-        public ICollection<Cita> citas { get; set; } = new List<Cita>();
+        public int Id {  get; set; }
+        public int PacienteId { get; set; }
+        public Paciente Paciente { get; set; }
+        public ICollection<Cita> Citas { get; set; } = new List<Cita>();
+        public string? ObservacionesGenerales { get; set; }
+        public DateTime FechaCreacion { get; set; } = DateTime.UtcNow;
     }
 }
