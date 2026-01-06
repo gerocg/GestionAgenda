@@ -4,6 +4,7 @@ using GestionAgenda.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace GestionAgenda.Migrations
 {
     [DbContext(typeof(ContextBd))]
-    partial class ContextBdModelSnapshot : ModelSnapshot
+    [Migration("20251229223943_SacoEstadoPendienteEnum")]
+    partial class SacoEstadoPendienteEnum
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -21,28 +24,6 @@ namespace GestionAgenda.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 64);
 
             MySqlModelBuilderExtensions.AutoIncrementColumns(modelBuilder);
-
-            modelBuilder.Entity("GestionAgenda.Controllers.BloqueoHorario", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTimeOffset>("FechaDesde")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<DateTimeOffset>("FechaHasta")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<string>("Motivo")
-                        .HasColumnType("longtext");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("BloqueosHorarios");
-                });
 
             modelBuilder.Entity("GestionAgenda.Modelo.Archivo", b =>
                 {
@@ -94,6 +75,12 @@ namespace GestionAgenda.Migrations
                     b.Property<DateTime>("FechaAgendada")
                         .HasColumnType("datetime(6)");
 
+                    b.Property<DateTime?>("FechaRealizada")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int?>("HistorialClinicoId")
+                        .HasColumnType("int");
+
                     b.Property<string>("Observaciones")
                         .HasColumnType("longtext");
 
@@ -109,46 +96,13 @@ namespace GestionAgenda.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("HistorialClinicoId");
+
                     b.HasIndex("PacienteId");
 
                     b.HasIndex("ProfesionalId");
 
                     b.ToTable("Citas");
-                });
-
-            modelBuilder.Entity("GestionAgenda.Modelo.ConfiguracionCalendario", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("DuracionCita")
-                        .HasColumnType("int");
-
-                    b.Property<TimeSpan>("HoraFin")
-                        .HasColumnType("time(6)");
-
-                    b.Property<TimeSpan>("HoraInicio")
-                        .HasColumnType("time(6)");
-
-                    b.Property<int>("IntervaloBase")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("ConfiguracionCalendario");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            DuracionCita = 30,
-                            HoraFin = new TimeSpan(0, 18, 0, 0, 0),
-                            HoraInicio = new TimeSpan(0, 8, 0, 0, 0),
-                            IntervaloBase = 30
-                        });
                 });
 
             modelBuilder.Entity("GestionAgenda.Modelo.HistorialClinico", b =>
@@ -337,7 +291,7 @@ namespace GestionAgenda.Migrations
             modelBuilder.Entity("GestionAgenda.Modelo.Archivo", b =>
                 {
                     b.HasOne("GestionAgenda.Modelo.Cita", "Cita")
-                        .WithMany("Archivos")
+                        .WithMany()
                         .HasForeignKey("CitaId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -347,6 +301,10 @@ namespace GestionAgenda.Migrations
 
             modelBuilder.Entity("GestionAgenda.Modelo.Cita", b =>
                 {
+                    b.HasOne("GestionAgenda.Modelo.HistorialClinico", "HistorialClinico")
+                        .WithMany("Citas")
+                        .HasForeignKey("HistorialClinicoId");
+
                     b.HasOne("GestionAgenda.Modelo.Paciente", "Paciente")
                         .WithMany()
                         .HasForeignKey("PacienteId")
@@ -358,6 +316,8 @@ namespace GestionAgenda.Migrations
                         .HasForeignKey("ProfesionalId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("HistorialClinico");
 
                     b.Navigation("Paciente");
 
@@ -435,9 +395,9 @@ namespace GestionAgenda.Migrations
                     b.Navigation("Usuario");
                 });
 
-            modelBuilder.Entity("GestionAgenda.Modelo.Cita", b =>
+            modelBuilder.Entity("GestionAgenda.Modelo.HistorialClinico", b =>
                 {
-                    b.Navigation("Archivos");
+                    b.Navigation("Citas");
                 });
 
             modelBuilder.Entity("GestionAgenda.Modelo.Paciente", b =>

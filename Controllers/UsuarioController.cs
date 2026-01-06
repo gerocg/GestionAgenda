@@ -16,6 +16,7 @@ using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
+using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Threading.Tasks;
 
@@ -54,35 +55,6 @@ namespace GestionAgenda.Controllers
         }
 
         [Authorize]
-        [HttpGet("{email}")]
-        public async Task<ActionResult<Usuario>> GetUsuario(string email)
-        {
-            var usuario = await _context.Usuarios.FirstOrDefaultAsync(u => u.Email == email);
-
-
-            if (usuario == null)
-            {
-                return NotFound();
-            }
-
-            return usuario;
-        }
-
-        [Authorize]
-        [HttpGet("paciente/{email}")]
-        public async Task<ActionResult<Paciente>> GetPaciente(string email)
-        {
-            var paciente = await _context.Pacientes.FirstOrDefaultAsync(p => p.Usuario.Email == email);
-
-            if (paciente == null)
-            {
-                return NotFound();
-            }
-
-            return paciente;
-        }
-
-        [Authorize]
         [HttpGet("filtrar")]
         public async Task<ActionResult<IEnumerable<Paciente>>> Filtrar(
             [FromQuery] string? nombre,
@@ -118,43 +90,41 @@ namespace GestionAgenda.Controllers
         }
 
         [Authorize]
-        [HttpPut("{email}")]
-        public async Task<IActionResult> PutUsuario(string email, Usuario u)
+        [HttpGet("me")]
+        public async Task<IActionResult> Me()
         {
-            if (email != u.Email)
-            {
-                return BadRequest();
-            }
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            if (userIdClaim == null) return Unauthorized();
 
-            _context.Entry(u).State = EntityState.Modified;
+            var userId = int.Parse(userIdClaim.Value);
 
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!UsuarioExists(email))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
+            var usuario = await _context.Usuarios.FindAsync(userId);
+            if (usuario == null) return NotFound();
 
-            return NoContent();
+            return Ok(usuario);
         }
 
-        private bool PacienteExists(string email)
+        [Authorize]
+        [HttpPut("me")]
+        public async Task<IActionResult> UpdateMe([FromBody] UsuarioUpdateDTO dto)
         {
-            return _context.Pacientes.Any(u => u.Usuario.Email == email);
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            if (userIdClaim == null) return Unauthorized();
+
+            var userId = int.Parse(userIdClaim.Value);
+
+            var usuario = await _context.Usuarios.FindAsync(userId);
+            if (usuario == null) return NotFound();
+
+            if (_context.Usuarios.Any(u => u.Email == dto.Email && u.Id != userId)) return BadRequest("El email ya está en uso.");
+
+            usuario.NombreCompleto = dto.NombreCompleto;
+            usuario.Email = dto.Email;
+
+            await _context.SaveChangesAsync();
+
+            return Ok(usuario);
         }
 
-        private bool UsuarioExists(string email)
-        {
-            return _context.Usuarios.Any(u => u.Email == email);
-        }
     }
 }

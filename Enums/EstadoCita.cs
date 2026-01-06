@@ -2,9 +2,10 @@
 {
     public enum EstadoCita
     {
-        Pendiente,
-        Confirmada,
-        Cancelada,
-        Realizada
+        Confirmada, 
+        PendienteResultado,
+        Realizada,
+        Inasistencia,
+        Cancelada
     }
 }

@@ -4,6 +4,7 @@ using GestionAgenda.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace GestionAgenda.Migrations
 {
     [DbContext(typeof(ContextBd))]
-    partial class ContextBdModelSnapshot : ModelSnapshot
+    [Migration("20260104171847_ConfiguracionCalendarioBloqueoHorariosYAlgoMas")]
+    partial class ConfiguracionCalendarioBloqueoHorariosYAlgoMas
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -30,10 +33,10 @@ namespace GestionAgenda.Migrations
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<DateTimeOffset>("FechaDesde")
+                    b.Property<DateTime>("FechaDesde")
                         .HasColumnType("datetime(6)");
 
-                    b.Property<DateTimeOffset>("FechaHasta")
+                    b.Property<DateTime>("FechaHasta")
                         .HasColumnType("datetime(6)");
 
                     b.Property<string>("Motivo")

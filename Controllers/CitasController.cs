@@ -64,10 +64,8 @@ namespace GestionAgenda.Controllers
             var fin = inicio.AddMinutes(cita.Duracion);
 
             var haySolapamiento = await _context.Citas.AnyAsync(c =>
-                c.ProfesionalId == profesionalId &&
-                c.Estado != EstadoCita.Cancelada &&
-                c.FechaAgendada < fin &&
-                c.FechaAgendada.AddMinutes(c.DuracionMinutos) > inicio
+                c.ProfesionalId == profesionalId && c.Estado != EstadoCita.Cancelada &&
+                c.FechaAgendada < fin && c.FechaAgendada.AddMinutes(c.DuracionMinutos) > inicio
             );
 
             if (haySolapamiento) return Conflict("El horario ya está ocupado");
@@ -80,7 +78,7 @@ namespace GestionAgenda.Controllers
                 DuracionMinutos = cita.Duracion,
                 Tratamiento = cita.Tratamiento,
                 Observaciones = cita.Observaciones,
-                Estado = EstadoCita.Pendiente
+                Estado = EstadoCita.Confirmada
             };
 
             _context.Citas.Add(nuevaCita);
@@ -106,6 +104,7 @@ namespace GestionAgenda.Controllers
         [HttpGet("getCitas")]
         public async Task<ActionResult<IEnumerable<Cita>>> GetCitas()
         {
+            await NormalizarEstadosCitas();
             return await _context.Citas.Include(c => c.Paciente).ThenInclude(p => p.Usuario).Include(c => c.Profesional).ThenInclude(p => p.Usuario).ToListAsync();
         }
 
@@ -113,75 +112,131 @@ namespace GestionAgenda.Controllers
         [HttpGet("getCitasEntreFechas")]
         public async Task<IActionResult> GetCitasEntreFechas([FromQuery] DateTime fechaInicio, [FromQuery] DateTime fechaFin)
         {
+            await NormalizarEstadosCitas();
+
             var citas = await _context.Citas.Include(c => c.Paciente).ThenInclude(p => p.Usuario).Where(c =>
-                    c.Estado != EstadoCita.Cancelada &&
-                    c.FechaAgendada < fechaFin &&
-                    c.FechaAgendada.AddMinutes(c.DuracionMinutos) > fechaInicio
+                    c.Estado != EstadoCita.Cancelada && c.FechaAgendada < fechaFin && c.FechaAgendada.AddMinutes(c.DuracionMinutos) > fechaInicio
                 ).Select(c => new
                 {
                     id = c.Id,
                     title = c.Paciente.Usuario.NombreCompleto,
                     start = c.FechaAgendada,
-                    end = c.FechaAgendada.AddMinutes(c.DuracionMinutos)
+                    end = c.FechaAgendada.AddMinutes(c.DuracionMinutos),
+                    estado = c.Estado.ToString()
                 }).ToListAsync();
 
             return Ok(citas);
         }
 
 
-        [Authorize(Roles = "Profesional,Admin")]
+        [Authorize(Roles = "Profesional,Admin, Paciente")]
         [HttpGet("filtrar")]
-        public async Task<ActionResult<IEnumerable<Cita>>> Filtrar(
-            [FromQuery] int? profesionalId,
-            [FromQuery] DateTime? desde,
-            [FromQuery] DateTime? hasta)
+        public async Task<ActionResult<IEnumerable<Cita>>> Filtrar([FromQuery] int? pacienteId, [FromQuery] DateTime? desde, [FromQuery] DateTime? hasta, [FromQuery] string? estado)
         {
-            var query = _context.Citas.Include(c => c.Profesional).AsQueryable();
+            await NormalizarEstadosCitas();
 
-            if (profesionalId.HasValue) query = query.Where(c => c.ProfesionalId == profesionalId.Value);
+            var query = _context.Citas.Include(c => c.Paciente).ThenInclude(p => p.Usuario).AsQueryable();
 
-            if (desde.HasValue) query = query.Where(c => c.FechaAgendada >= desde.Value);
+            if (User.IsInRole("Paciente"))
+            {
+                var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+                query = query.Where(c => c.Paciente.UsuarioId == userId);
+            }
+            else if (pacienteId.HasValue)
+            {
+                query = query.Where(c => c.PacienteId == pacienteId.Value);
+            }
 
-            if (hasta.HasValue) query = query.Where(c => c.FechaAgendada <= hasta.Value);
+            if (desde.HasValue) query = query.Where(c => c.FechaAgendada >= desde.Value.Date);
 
-            return Ok(await query.ToListAsync());
+            if (hasta.HasValue)
+            {
+                var hastaFinDia = hasta.Value.Date.AddDays(1).AddTicks(-1);
+                query = query.Where(c => c.FechaAgendada <= hastaFinDia);
+            }
+
+            if (!string.IsNullOrEmpty(estado) && Enum.TryParse<EstadoCita>(estado, out var estadoEnum))
+            {
+                query = query.Where(c => c.Estado == estadoEnum);
+            }
+
+            var resultado = await query
+                .OrderByDescending(c => c.FechaAgendada)
+                .Select(c => new
+                {
+                    id = c.Id,
+                    fecha = c.FechaAgendada,
+                    estado = c.Estado.ToString(),
+                    paciente = new
+                    {
+                        id = c.Paciente.Id,
+                        nombre = c.Paciente.Usuario.NombreCompleto
+                    }
+                }).ToListAsync();
+
+            return Ok(resultado);
         }
 
-        [Authorize]
+        [Authorize(Roles = "Admin, Profesional, Paciente")]
         [HttpPost("{citaId}/archivo")]
         public async Task<IActionResult> SubirArchivo(int citaId, IFormFile archivo)
         {
-            if (archivo == null || archivo.Length == 0)
-                return BadRequest("Archivo vacío");
+            if (archivo == null || archivo.Length == 0) return BadRequest("Archivo vacío");
+
+            var tiposPermitidos = new[] { "application/pdf", "image/jpeg", "image/png" };
+            if (!tiposPermitidos.Contains(archivo.ContentType)) return BadRequest("Tipo de archivo no permitido");
 
             var citaExiste = await _context.Citas.AnyAsync(c => c.Id == citaId);
-            if (!citaExiste)
-                return NotFound("Cita no encontrada");
+            if (!citaExiste) return NotFound("Cita no encontrada");
 
-            var carpeta = Path.Combine("uploads", "citas", citaId.ToString());
-            Directory.CreateDirectory(carpeta);
+            var carpetaFisica = Path.Combine(Directory.GetCurrentDirectory(), "uploads", "citas", citaId.ToString());
 
-            var rutaFisica = Path.Combine(carpeta, archivo.FileName);
+            Directory.CreateDirectory(carpetaFisica);
+            var rutaFisica = Path.Combine(carpetaFisica, archivo.FileName);
+
             using (var stream = new FileStream(rutaFisica, FileMode.Create))
             {
                 await archivo.CopyToAsync(stream);
             }
 
+            var rutaPublica = $"/uploads/citas/{citaId}/{archivo.FileName}";
             var adjunto = new Archivo
             {
                 CitaId = citaId,
                 NombreArchivo = archivo.FileName,
                 TipoArchivo = archivo.ContentType,
-                RutaArchivo = rutaFisica.Replace("\\", "/"),
+                RutaArchivo = rutaPublica,
                 FechaSubida = DateTime.UtcNow
             };
 
             _context.Archivos.Add(adjunto);
             await _context.SaveChangesAsync();
 
-            return Ok("Archivo subido correctamente");
+            return Ok(new { mensaje = "Archivo subido correctamente" });
         }
 
+        [Authorize(Roles = "Admin, Profesional")]
+        [HttpDelete("archivo/{archivoId}")]
+        public async Task<IActionResult> EliminarArchivo(int archivoId)
+        {
+            var archivo = await _context.Archivos.FindAsync(archivoId);
+            if (archivo == null) return NotFound("Archivo no encontrado");
+
+            var rutaFisica = Path.Combine(
+                Directory.GetCurrentDirectory(),
+                archivo.RutaArchivo.TrimStart('/').Replace("/", Path.DirectorySeparatorChar.ToString())
+            );
+
+            if (System.IO.File.Exists(rutaFisica)) System.IO.File.Delete(rutaFisica);
+
+            _context.Archivos.Remove(archivo);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { mensaje = "Archivo eliminado correctamente" });
+        }
+
+
+        [Authorize]
         [HttpGet("{id}")]
         public async Task<IActionResult> GetCita(int id)
         {
@@ -239,5 +294,42 @@ namespace GestionAgenda.Controllers
 
             return NoContent();
         }
+
+        private async Task NormalizarEstadosCitas()
+        {
+            var ahora = DateTime.Now;
+
+            var citasParaActualizar = await _context.Citas.Where(c => c.Estado == EstadoCita.Confirmada && c.FechaAgendada.AddMinutes(c.DuracionMinutos) < ahora).ToListAsync();
+
+            if (!citasParaActualizar.Any()) return;
+
+            foreach (var cita in citasParaActualizar)
+            {
+                cita.Estado = EstadoCita.PendienteResultado;
+            }
+
+            await _context.SaveChangesAsync();
+        }
+
+
+        [Authorize(Roles = "Admin,Profesional")]
+        [HttpPut("{id}/estado")]
+        public async Task<IActionResult> CambiarEstado(int id, [FromBody] CambiarEstadoCitaDTO nuevoEstado)
+        {
+            var cita = await _context.Citas.FindAsync(id);
+            if (cita == null) return NotFound("Cita no encontrada");
+
+
+            if (cita.Estado != EstadoCita.PendienteResultado) return BadRequest("Solo se puede cambiar el estado de citas pendientes de resultado");
+            if (!Enum.TryParse<EstadoCita>(nuevoEstado.Estado, out var estado)) return BadRequest("Estado inválido");
+            if (estado != EstadoCita.Realizada && estado != EstadoCita.Inasistencia) return BadRequest("Estado no permitido");
+
+            cita.Estado = estado;
+            await _context.SaveChangesAsync();
+
+            return Ok(new { estado = cita.Estado.ToString() });
+        }
+
+
     }
 }

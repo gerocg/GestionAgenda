@@ -1,4 +1,5 @@
-﻿using GestionAgenda.Modelo;
+﻿using GestionAgenda.Controllers;
+using GestionAgenda.Modelo;
 using Microsoft.EntityFrameworkCore;
 
 namespace GestionAgenda.Context
@@ -16,6 +17,10 @@ namespace GestionAgenda.Context
         public DbSet<Cita> Citas { get; set; }
         public DbSet<Archivo> Archivos { get; set; }
         public DbSet<Recordatorio> Recordatorios { get; set; }
+        public DbSet<ConfiguracionCalendario> ConfiguracionCalendario { get; set; }
+        public DbSet<BloqueoHorario> BloqueosHorarios { get; set; }
+
+
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -44,6 +49,18 @@ namespace GestionAgenda.Context
                 new Rol { Id = 2, Nombre = "Profesional" },
                 new Rol { Id = 3, Nombre = "Admin" }
             );
+
+            modelBuilder.Entity<ConfiguracionCalendario>().HasData(
+                new ConfiguracionCalendario
+                {
+                    Id = 1,
+                    HoraInicio = new TimeSpan(8, 0, 0),
+                    HoraFin = new TimeSpan(18, 0, 0),
+                    IntervaloBase = 30,
+                    DuracionCita = 30
+                }
+            );
+
         }
 
 
