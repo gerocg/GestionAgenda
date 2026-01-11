@@ -1,5 +1,6 @@
 ﻿using GestionAgenda.Context;
 using GestionAgenda.DTOs;
+using GestionAgenda.Enums;
 using GestionAgenda.Modelo;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -39,11 +40,13 @@ namespace GestionAgenda.Controllers
         public async Task<IActionResult> Crear(BloqueoHorarioDTO bloqueo)
         {
             if (bloqueo.FechaDesde >= bloqueo.FechaHasta) return BadRequest("Rango inválido");
-
+            
             if (bloqueo.FechaDesde <= DateTime.Now) return BadRequest("No se permiten bloqueos en el pasado");
 
-            bool solapa = await _context.BloqueosHorarios.AnyAsync(b => bloqueo.FechaDesde < b.FechaHasta && bloqueo.FechaHasta > b.FechaDesde);
+            bool hayCitas = await _context.Citas.AnyAsync(c => c.Estado == EstadoCita.Confirmada && c.FechaAgendada <= bloqueo.FechaHasta && c.FechaAgendada >= bloqueo.FechaDesde);
+            if (hayCitas) return BadRequest("No se puede bloquear el horario porque existen citas confirmadas");
 
+            bool solapa = await _context.BloqueosHorarios.AnyAsync(b => bloqueo.FechaDesde < b.FechaHasta && bloqueo.FechaHasta > b.FechaDesde);
             if (solapa) return Conflict("El bloqueo se solapa con otro existente");
 
             var bloqueoNuevo = new BloqueoHorario

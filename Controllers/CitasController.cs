@@ -33,8 +33,7 @@ namespace GestionAgenda.Controllers
         [HttpPost("nuevaCita")]
         public async Task<IActionResult> NuevaCita([FromBody] CitaDTO cita)
         {
-            if (cita == null)
-                return BadRequest("Datos inválidos");
+            if (cita == null) return BadRequest("Datos inválidos");
 
             int pacienteIdFinal;
             Paciente paciente;
@@ -69,6 +68,8 @@ namespace GestionAgenda.Controllers
             );
 
             if (haySolapamiento) return Conflict("El horario ya está ocupado");
+            
+            if (cita.FechaHora < DateTime.Today) return BadRequest("No se pueden crear citas en fechas pasadas");
 
             var nuevaCita = new Cita
             {
@@ -108,7 +109,7 @@ namespace GestionAgenda.Controllers
             return await _context.Citas.Include(c => c.Paciente).ThenInclude(p => p.Usuario).Include(c => c.Profesional).ThenInclude(p => p.Usuario).ToListAsync();
         }
 
-        [Authorize(Roles = "Profesional,Admin")]
+        [Authorize(Roles = "Profesional, Admin, Paciente")]
         [HttpGet("getCitasEntreFechas")]
         public async Task<IActionResult> GetCitasEntreFechas([FromQuery] DateTime fechaInicio, [FromQuery] DateTime fechaFin)
         {
@@ -183,7 +184,7 @@ namespace GestionAgenda.Controllers
         {
             if (archivo == null || archivo.Length == 0) return BadRequest("Archivo vacío");
 
-            var tiposPermitidos = new[] { "application/pdf", "image/jpeg", "image/png" };
+            var tiposPermitidos = new[] { "application/pdf", "image/jpeg", "image/png", "image/jpg" };
             if (!tiposPermitidos.Contains(archivo.ContentType)) return BadRequest("Tipo de archivo no permitido");
 
             var citaExiste = await _context.Citas.AnyAsync(c => c.Id == citaId);
@@ -268,6 +269,8 @@ namespace GestionAgenda.Controllers
             var cita = await _context.Citas.FindAsync(id);
 
             if (cita == null) return NotFound("La cita no existe");
+
+            if (dto.FechaHora < DateTime.Today) return BadRequest("No se pueden crear citas en fechas pasadas");
 
             cita.FechaAgendada = dto.FechaHora;
             cita.DuracionMinutos = dto.Duracion;
