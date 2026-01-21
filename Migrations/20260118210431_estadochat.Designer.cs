@@ -4,6 +4,7 @@ using GestionAgenda.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace GestionAgenda.Migrations
 {
     [DbContext(typeof(ContextBd))]
-    partial class ContextBdModelSnapshot : ModelSnapshot
+    [Migration("20260118210431_estadochat")]
+    partial class estadochat
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -260,10 +263,7 @@ namespace GestionAgenda.Migrations
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<bool>("Enviado")
-                        .HasColumnType("tinyint(1)");
-
-                    b.Property<DateTime>("FechaEnviado")
+                    b.Property<DateTime>("FechaEntrega")
                         .HasColumnType("datetime(6)");
 
                     b.Property<string>("Mensaje")
@@ -273,20 +273,14 @@ namespace GestionAgenda.Migrations
                     b.Property<int>("PacienteId")
                         .HasColumnType("int");
 
-                    b.Property<long>("chatId")
-                        .HasColumnType("bigint");
-
-                    b.Property<int>("citaId")
+                    b.Property<int>("ProfesionalId")
                         .HasColumnType("int");
-
-                    b.Property<DateTime>("fechaEnvio")
-                        .HasColumnType("datetime(6)");
 
                     b.HasKey("Id");
 
                     b.HasIndex("PacienteId");
 
-                    b.HasIndex("citaId");
+                    b.HasIndex("ProfesionalId");
 
                     b.ToTable("Recordatorios");
                 });
@@ -439,15 +433,15 @@ namespace GestionAgenda.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("GestionAgenda.Modelo.Cita", "cita")
+                    b.HasOne("GestionAgenda.Modelo.Profesional", "Profesional")
                         .WithMany()
-                        .HasForeignKey("citaId")
+                        .HasForeignKey("ProfesionalId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Paciente");
 
-                    b.Navigation("cita");
+                    b.Navigation("Profesional");
                 });
 
             modelBuilder.Entity("GestionAgenda.Modelo.UsuarioRol", b =>

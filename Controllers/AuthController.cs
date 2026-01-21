@@ -33,13 +33,16 @@ namespace GestionAgenda.Controllers
         private readonly JwtService _jwt;
         private readonly IConfiguration _config;
         private readonly CredencialesService _credenciales;
+        private readonly IPacienteService _pacienteService;
 
-        public AuthController(ContextBd context, JwtService jwt, IConfiguration config, CredencialesService credenciales)
+        public AuthController(ContextBd context, JwtService jwt, IConfiguration config, CredencialesService credenciales, IPacienteService pacienteService)
         {
             _context = context;
             _jwt = jwt;
             _config = config;
             _credenciales = credenciales;
+            _pacienteService = pacienteService;
+
         }
 
         [HttpPost("login")]
@@ -99,7 +102,7 @@ namespace GestionAgenda.Controllers
             {
                 UsuarioId = usuario.Id,
                 FechaNacimiento = dto.FechaNacimiento,
-                Telefono = dto.Telefono
+                Telefono = PacienteService.NormalizarTelefono(dto.Telefono)
             });
 
             await _context.SaveChangesAsync();

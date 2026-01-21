@@ -1,0 +1,14 @@
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace GestionAgenda.Modelo
+{
+    public class EstadoChat
+    {
+        [Key]
+        public long chatId { get; set; }
+        public String? telefono { get; set; }
+        public DateOnly? fecha { get; set; }
+        public TimeOnly? hora { get; set; }
+        public DateTime updatedAt { get; set; }
+    }
+}

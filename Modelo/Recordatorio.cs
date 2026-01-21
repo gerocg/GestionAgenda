@@ -7,8 +7,11 @@ namespace GestionAgenda.Modelo
         [Key]
         public int Id {  get; set; }
         public Paciente Paciente {  get; set; }
-        public Profesional Profesional {  get; set; }
+        public DateTime fechaEnvio {  get; set; }
         public string Mensaje { get; set; }
-        public DateTime FechaEntrega { get; set; }
+        public Cita cita { get; set; }
+        public bool Enviado { get; set; }
+        public DateTime FechaEnviado { get; set; }
+        public long chatId { get; set; }
     }
 }
