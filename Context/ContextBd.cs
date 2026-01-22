@@ -19,6 +19,7 @@ namespace GestionAgenda.Context
         public DbSet<Recordatorio> Recordatorios { get; set; }
         public DbSet<ConfiguracionCalendario> ConfiguracionCalendario { get; set; }
         public DbSet<BloqueoHorario> BloqueosHorarios { get; set; }
+        public DbSet<EstadoChat> EstadoChats { get; set; }
 
 
 
@@ -60,6 +61,14 @@ namespace GestionAgenda.Context
                     DuracionCita = 30
                 }
             );
+
+            modelBuilder.Entity<EstadoChat>()
+                .Property(e => e.fecha)
+                .HasColumnType("DATE");
+
+            modelBuilder.Entity<EstadoChat>()
+                .Property(e => e.hora)
+                .HasColumnType("TIME");
 
         }
 

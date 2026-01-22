@@ -2,6 +2,7 @@
 using GestionAgenda.DTOs;
 using GestionAgenda.Enums;
 using GestionAgenda.Modelo;
+using GestionAgenda.Services;
 using Humanizer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -97,6 +98,193 @@ namespace GestionAgenda.Controllers
                 tratamiento = nuevaCita.Tratamiento,
                 observaciones = nuevaCita.Observaciones,
                 estado = nuevaCita.Estado.ToString()
+            });
+        }
+
+        [Authorize(Roles = "Profesional,Admin")]
+        [HttpGet("fechas-disponibles")]
+        public IActionResult GetFechasDisponibles([FromQuery] long chatId)
+        {
+
+            // 1. Crear o actualizar EstadoChat
+            var estado = _context.EstadoChats
+                .FirstOrDefault(e => e.chatId == chatId);
+
+            if (estado == null)
+            {
+                estado = new EstadoChat
+                {
+                    chatId = chatId,
+                    updatedAt = DateTime.UtcNow
+                };
+                _context.EstadoChats.Add(estado);
+            }
+            else
+            {
+                estado.updatedAt = DateTime.UtcNow;
+            }
+
+            _context.SaveChanges();
+
+            // 2. Devolver fechas disponibles
+            var fechas = ObtenerProximosDiasLaborales();
+
+            var resultado = fechas.Select(f => new
+            {
+                fechaIso = f.ToString("yyyy-MM-dd"),
+                fechaTexto = f.ToString("dd/MM/yyyy"),
+                dia = f.DayOfWeek.ToString()
+            });
+
+            return Ok(resultado);
+        }
+
+        public List<DateTime> ObtenerProximosDiasLaborales()
+        {
+            
+            int cantidad = 5;
+            var fechas = new List<DateTime>();
+            var fechaActual = DateTime.Today;
+
+            while (fechas.Count < cantidad)
+            {
+                // Lunes a Viernes
+                if (fechaActual.DayOfWeek != DayOfWeek.Saturday &&
+                    fechaActual.DayOfWeek != DayOfWeek.Sunday)
+                {
+                    fechas.Add(fechaActual);
+                }
+
+                fechaActual = fechaActual.AddDays(1);
+            }
+
+            return fechas;
+        }
+
+        [Authorize(Roles = "Profesional,Admin")]
+        [HttpGet("horas-disponibles")]
+        public IActionResult GetHorasDisponibles([FromQuery] long chatId, [FromQuery] DateTime fecha)
+        {
+            // 1. Buscar estado
+            var estado = _context.EstadoChats
+                .FirstOrDefault(e => e.chatId == chatId);
+
+            if (estado == null)
+                return BadRequest("No existe estado para el chat");
+
+            // 2. Guardar fecha
+            estado.fecha = DateOnly.FromDateTime(fecha);
+            estado.hora = null; // por si vuelve atrás
+            estado.updatedAt = DateTime.UtcNow;
+
+            _context.SaveChanges();
+
+            // 3. Calcular horas
+            var horas = ObtenerHorasDisponibles(fecha);
+
+            var resultado = horas.Select(h => new
+            {
+                hora = h.ToString(@"hh\:mm")
+            });
+
+            return Ok(resultado);
+        }
+
+        public List<TimeSpan> ObtenerHorasDisponibles(DateTime fecha)
+        {
+            var horaInicio = new TimeSpan(8, 0, 0);
+            var horaFin = new TimeSpan(19, 0, 0);
+            var duracionTurno = TimeSpan.FromMinutes(60);
+
+            var citasDelDia = _context.Citas
+                .Where(c => c.FechaAgendada.Date == fecha.Date)
+                .Select(c => c.FechaAgendada.TimeOfDay)
+                .ToList();
+
+            var horasDisponibles = new List<TimeSpan>();
+            var horaActual = horaInicio;
+
+            while (horaActual < horaFin)
+            {
+                if (!citasDelDia.Contains(horaActual))
+                {
+                    horasDisponibles.Add(horaActual);
+                }
+
+                horaActual = horaActual.Add(duracionTurno);
+            }
+
+            return horasDisponibles;
+        }
+
+        [HttpPost("guardar-hora")]
+        public IActionResult GuardarHora(
+            [FromQuery] long chatId,
+            [FromQuery] TimeOnly hora)
+        {
+            var estado = _context.EstadoChats
+                .FirstOrDefault(e => e.chatId == chatId);
+
+            if (estado == null || estado.fecha == null)
+                return BadRequest("Falta seleccionar fecha");
+
+            estado.hora = hora;
+            estado.updatedAt = DateTime.Now;
+            Console.WriteLine($"Hora antes de guardar: {estado.hora}");
+
+            _context.SaveChanges();
+
+            return Ok(new { mensaje = "Hora guardada" });
+        }
+
+        [HttpPost("guardar-telefono")]
+        public IActionResult GuardarTelefono(
+            [FromQuery] long chatId,
+            [FromQuery] string telefono)
+        {
+            var estado = _context.EstadoChats
+                .FirstOrDefault(e => e.chatId == chatId);
+
+            if (estado == null)
+                return BadRequest("No existe estado para el chat");
+
+            estado.telefono = PacienteService.NormalizarTelefono(telefono);
+            estado.updatedAt = DateTime.UtcNow;
+
+            _context.SaveChanges();
+
+            return Ok(new { mensaje = "Teléfono guardado" });
+        }
+
+        [HttpGet("preconfirmar")]
+        public IActionResult Preconfirmar(
+            [FromQuery] long chatId,
+            [FromQuery] string telefono)
+        {
+            // Normalizá el teléfono (muy importante)
+            telefono = PacienteService.NormalizarTelefono(telefono);
+
+            var estado = _context.EstadoChats
+                .FirstOrDefault(e => e.chatId == chatId);
+
+            if (estado == null || estado.fecha == null || estado.hora == null)
+                return BadRequest("Datos incompletos");
+
+            var paciente = _context.Pacientes
+                .Include(p => p.Usuario)
+                .FirstOrDefault(p => p.Telefono == telefono);
+
+            if (paciente == null)
+                return NotFound("Paciente no encontrado");
+
+            return Ok(new
+            {
+                pacienteId = paciente.Id,
+                nombre = paciente.Usuario.NombreCompleto,
+                fecha = estado.fecha.Value.ToString("dd/MM/yyyy"),
+                hora = estado.hora.Value.ToString("HH:mm"),
+                fechaIso = estado.fecha.Value.ToString("yyyy-MM-dd"),
+                horaIso = estado.hora.Value.ToString("HH:mm")
             });
         }
 

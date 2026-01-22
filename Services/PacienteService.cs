@@ -16,6 +16,25 @@ namespace GestionAgenda.Services
             _context = context;
         }
 
+        public static string NormalizarTelefono(string telefono)
+        {
+            if (string.IsNullOrWhiteSpace(telefono))
+                return string.Empty;
+
+            var soloNumeros = new string(telefono.Where(char.IsDigit).ToArray());
+
+            if (soloNumeros.StartsWith("0"))
+                soloNumeros = soloNumeros.Substring(1);
+
+            if (soloNumeros.Length == 8)
+                soloNumeros = "598" + soloNumeros;
+
+            if (soloNumeros.StartsWith("598") && soloNumeros.Length == 11)
+                return soloNumeros;
+
+            return soloNumeros;
+        }
+
         public Paciente GetById(int id)
         {
             return _context.Pacientes.Include(p => p.Usuario).Include(p => p.HistorialClinico).FirstOrDefault(p => p.UsuarioId == id);

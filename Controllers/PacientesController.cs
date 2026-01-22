@@ -235,7 +235,7 @@ namespace GestionAgenda.Controllers
             var paciente = new Paciente
             {
                 UsuarioId = usuario.Id,
-                Telefono = dto.Telefono,
+                Telefono = PacienteService.NormalizarTelefono(dto.Telefono),
                 FechaNacimiento = dto.FechaNacimiento
             };
 
@@ -247,6 +247,8 @@ namespace GestionAgenda.Controllers
 
             return Ok();
         }
+
+        
 
         [Authorize(Roles = "Admin,Profesional")]
         [HttpPut("{id}")]
