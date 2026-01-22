@@ -23,10 +23,12 @@ namespace GestionAgenda.Controllers
     public class CitasController : ControllerBase
     {
         private readonly ContextBd _context;
+        private readonly CitasEmailService _emailService;
 
-        public CitasController(ContextBd context)
+        public CitasController(ContextBd context, CitasEmailService emailService)
         {
             _context = context;
+            _emailService = emailService;
         }
 
         //Alta de cita
@@ -86,6 +88,10 @@ namespace GestionAgenda.Controllers
             _context.Citas.Add(nuevaCita);
             await _context.SaveChangesAsync();
 
+            await _context.Entry(nuevaCita).Reference(c => c.Paciente).Query().Include(p => p.Usuario).LoadAsync();
+
+            await _emailService.EnviarConfirmacion(nuevaCita, paciente.Usuario.Email, paciente.Usuario.NombreCompleto);
+
             return Ok(new
             {
                 id = nuevaCita.Id,
@@ -106,9 +112,7 @@ namespace GestionAgenda.Controllers
         public IActionResult GetFechasDisponibles([FromQuery] long chatId)
         {
 
-            // 1. Crear o actualizar EstadoChat
-            var estado = _context.EstadoChats
-                .FirstOrDefault(e => e.chatId == chatId);
+            var estado = _context.EstadoChats.FirstOrDefault(e => e.chatId == chatId);
 
             if (estado == null)
             {
@@ -126,7 +130,6 @@ namespace GestionAgenda.Controllers
 
             _context.SaveChanges();
 
-            // 2. Devolver fechas disponibles
             var fechas = ObtenerProximosDiasLaborales();
 
             var resultado = fechas.Select(f => new
@@ -139,7 +142,7 @@ namespace GestionAgenda.Controllers
             return Ok(resultado);
         }
 
-        public List<DateTime> ObtenerProximosDiasLaborales()
+        private List<DateTime> ObtenerProximosDiasLaborales()
         {
             
             int cantidad = 5;
@@ -149,8 +152,7 @@ namespace GestionAgenda.Controllers
             while (fechas.Count < cantidad)
             {
                 // Lunes a Viernes
-                if (fechaActual.DayOfWeek != DayOfWeek.Saturday &&
-                    fechaActual.DayOfWeek != DayOfWeek.Sunday)
+                if (fechaActual.DayOfWeek != DayOfWeek.Saturday && fechaActual.DayOfWeek != DayOfWeek.Sunday)
                 {
                     fechas.Add(fechaActual);
                 }
@@ -165,21 +167,16 @@ namespace GestionAgenda.Controllers
         [HttpGet("horas-disponibles")]
         public IActionResult GetHorasDisponibles([FromQuery] long chatId, [FromQuery] DateTime fecha)
         {
-            // 1. Buscar estado
-            var estado = _context.EstadoChats
-                .FirstOrDefault(e => e.chatId == chatId);
+            var estado = _context.EstadoChats.FirstOrDefault(e => e.chatId == chatId);
 
-            if (estado == null)
-                return BadRequest("No existe estado para el chat");
+            if (estado == null) return BadRequest("No existe estado para el chat");
 
-            // 2. Guardar fecha
             estado.fecha = DateOnly.FromDateTime(fecha);
-            estado.hora = null; // por si vuelve atrás
+            estado.hora = null;
             estado.updatedAt = DateTime.UtcNow;
 
             _context.SaveChanges();
 
-            // 3. Calcular horas
             var horas = ObtenerHorasDisponibles(fecha);
 
             var resultado = horas.Select(h => new
@@ -190,16 +187,13 @@ namespace GestionAgenda.Controllers
             return Ok(resultado);
         }
 
-        public List<TimeSpan> ObtenerHorasDisponibles(DateTime fecha)
+        private List<TimeSpan> ObtenerHorasDisponibles(DateTime fecha)
         {
             var horaInicio = new TimeSpan(8, 0, 0);
             var horaFin = new TimeSpan(19, 0, 0);
             var duracionTurno = TimeSpan.FromMinutes(60);
 
-            var citasDelDia = _context.Citas
-                .Where(c => c.FechaAgendada.Date == fecha.Date)
-                .Select(c => c.FechaAgendada.TimeOfDay)
-                .ToList();
+            var citasDelDia = _context.Citas.Where(c => c.FechaAgendada.Date == fecha.Date).Select(c => c.FechaAgendada.TimeOfDay).ToList();
 
             var horasDisponibles = new List<TimeSpan>();
             var horaActual = horaInicio;
@@ -218,15 +212,11 @@ namespace GestionAgenda.Controllers
         }
 
         [HttpPost("guardar-hora")]
-        public IActionResult GuardarHora(
-            [FromQuery] long chatId,
-            [FromQuery] TimeOnly hora)
+        public IActionResult GuardarHora([FromQuery] long chatId, [FromQuery] TimeOnly hora)
         {
-            var estado = _context.EstadoChats
-                .FirstOrDefault(e => e.chatId == chatId);
+            var estado = _context.EstadoChats.FirstOrDefault(e => e.chatId == chatId);
 
-            if (estado == null || estado.fecha == null)
-                return BadRequest("Falta seleccionar fecha");
+            if (estado == null || estado.fecha == null) return BadRequest("Falta seleccionar fecha");
 
             estado.hora = hora;
             estado.updatedAt = DateTime.Now;
@@ -238,15 +228,11 @@ namespace GestionAgenda.Controllers
         }
 
         [HttpPost("guardar-telefono")]
-        public IActionResult GuardarTelefono(
-            [FromQuery] long chatId,
-            [FromQuery] string telefono)
+        public IActionResult GuardarTelefono([FromQuery] long chatId, [FromQuery] string telefono)
         {
-            var estado = _context.EstadoChats
-                .FirstOrDefault(e => e.chatId == chatId);
+            var estado = _context.EstadoChats.FirstOrDefault(e => e.chatId == chatId);
 
-            if (estado == null)
-                return BadRequest("No existe estado para el chat");
+            if (estado == null) return BadRequest("No existe estado para el chat");
 
             estado.telefono = PacienteService.NormalizarTelefono(telefono);
             estado.updatedAt = DateTime.UtcNow;
@@ -257,25 +243,17 @@ namespace GestionAgenda.Controllers
         }
 
         [HttpGet("preconfirmar")]
-        public IActionResult Preconfirmar(
-            [FromQuery] long chatId,
-            [FromQuery] string telefono)
+        public IActionResult Preconfirmar([FromQuery] long chatId, [FromQuery] string telefono)
         {
-            // Normalizá el teléfono (muy importante)
             telefono = PacienteService.NormalizarTelefono(telefono);
 
-            var estado = _context.EstadoChats
-                .FirstOrDefault(e => e.chatId == chatId);
+            var estado = _context.EstadoChats.FirstOrDefault(e => e.chatId == chatId);
 
-            if (estado == null || estado.fecha == null || estado.hora == null)
-                return BadRequest("Datos incompletos");
+            if (estado == null || estado.fecha == null || estado.hora == null) return BadRequest("Datos incompletos");
 
-            var paciente = _context.Pacientes
-                .Include(p => p.Usuario)
-                .FirstOrDefault(p => p.Telefono == telefono);
+            var paciente = _context.Pacientes.Include(p => p.Usuario).FirstOrDefault(p => p.Telefono == telefono);
 
-            if (paciente == null)
-                return NotFound("Paciente no encontrado");
+            if (paciente == null) return NotFound("Paciente no encontrado");
 
             return Ok(new
             {
@@ -468,6 +446,10 @@ namespace GestionAgenda.Controllers
 
             await _context.SaveChangesAsync();
 
+            var citaCompleta = await _context.Citas.Include(c => c.Paciente).ThenInclude(p => p.Usuario).FirstAsync(c => c.Id == id);
+
+            await _emailService.EnviarModificacion(citaCompleta, citaCompleta.Paciente.Usuario.Email, citaCompleta.Paciente.Usuario.NombreCompleto);
+
             return NoContent();
         }
 
@@ -475,13 +457,15 @@ namespace GestionAgenda.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteCita(int id)
         {
-            var cita = await _context.Citas.FindAsync(id);
+            var cita = await _context.Citas.Include(c => c.Paciente).ThenInclude(p => p.Usuario).FirstOrDefaultAsync(c => c.Id == id);
 
             if (cita == null) return NotFound("La cita no existe");
 
             cita.Estado = EstadoCita.Cancelada;
 
             await _context.SaveChangesAsync();
+
+            await _emailService.EnviarCancelacion(cita, cita.Paciente.Usuario.Email, cita.Paciente.Usuario.NombreCompleto);
 
             return NoContent();
         }

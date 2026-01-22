@@ -74,6 +74,7 @@ builder.Services.AddAuthentication("Bearer")
 builder.Services.AddScoped<JwtService>();
 builder.Services.AddScoped<IPacienteService, PacienteService>();
 builder.Services.AddScoped<CredencialesService>();
+builder.Services.AddScoped<CitasEmailService>();
 
 var app = builder.Build();
 
