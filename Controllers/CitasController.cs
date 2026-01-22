@@ -521,6 +521,44 @@ namespace GestionAgenda.Controllers
             return Ok(new { estado = cita.Estado.ToString() });
         }
 
+        [Authorize(Roles = "Admin,Profesional")]
+        [HttpGet("reporteCitas")]
+        public async Task<IActionResult> ReporteCitas([FromQuery] int? pacienteId, [FromQuery] DateTime? desde, [FromQuery] DateTime? hasta, [FromQuery] string? estado) {
+            var query = _context.Citas.Include(c => c.Paciente).ThenInclude(p => p.Usuario).AsQueryable();
 
+            query = query.Where(c => c.Estado == EstadoCita.Realizada || c.Estado == EstadoCita.Cancelada || c.Estado == EstadoCita.Inasistencia);
+
+            if (pacienteId.HasValue) query = query.Where(c => c.PacienteId == pacienteId.Value);
+
+            if (desde.HasValue) query = query.Where(c => c.FechaAgendada >= desde.Value.Date);
+
+            if (hasta.HasValue) query = query.Where(c => c.FechaAgendada <= hasta.Value.Date.AddDays(1).AddTicks(-1));
+
+            if (!string.IsNullOrEmpty(estado) && Enum.TryParse<EstadoCita>(estado, out var estadoEnum))
+                query = query.Where(c => c.Estado == estadoEnum);
+
+            var citas = await query.ToListAsync();
+
+            var detalle = citas.Select(c => new CitaReporteDTO
+            {
+                Id = c.Id,
+                FechaHora = c.FechaAgendada,
+                DuracionMinutos = c.DuracionMinutos,
+                Estado = c.Estado.ToString(),
+                Tratamiento = c.Tratamiento,
+                Observaciones = c.Observaciones,
+                NombrePaciente = c.Paciente.Usuario.NombreCompleto
+            }).ToList();
+
+            var resumen = new ResumenReporteCitasDTO
+            {
+                Total = citas.Count,
+                Realizadas = citas.Count(c => c.Estado == EstadoCita.Realizada),
+                Canceladas = citas.Count(c => c.Estado == EstadoCita.Cancelada),
+                Inasistencias = citas.Count(c => c.Estado == EstadoCita.Inasistencia)
+            };
+
+            return Ok(new { resumen, detalle });
+        }
     }
 }
