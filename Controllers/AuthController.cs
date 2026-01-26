@@ -107,7 +107,6 @@ namespace GestionAgenda.Controllers
 
             await _context.SaveChangesAsync();
 
-            // Si todo va bien, devolvemos los datos del usuario (sin la contraseña)
             return Ok(new
             {
                 nombre = usuario.NombreCompleto,
