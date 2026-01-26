@@ -50,7 +50,7 @@ namespace GestionAgenda.Controllers
         {
             var usuario = await _context.Usuarios.Include(u => u.UsuarioRoles).ThenInclude(ur => ur.Rol).FirstOrDefaultAsync(u => u.Email == login.Email);
             
-            if (usuario == null) return NotFound("Datos incorrectos.");
+            if (usuario == null) return NotFound("Usuario no encontrado.");
 
             if (usuario.PasswordHash == null) return Unauthorized("Debe completar su registro.");
 
