@@ -80,7 +80,7 @@ namespace GestionAgenda.Controllers
             {
                 Email = dto.Email,
                 NombreCompleto = dto.NombreCompleto,
-                RequiereCambioContrasena = true
+                RequiereCambioContrasena = false
             };
 
             var hasher = new PasswordHasher<Usuario>();
@@ -117,8 +117,7 @@ namespace GestionAgenda.Controllers
         [HttpPost("recuperarContrasena")]
         public async Task<IActionResult> RecuperarContrasenia([FromBody] RecuperarEmailDTO dto)
         {
-            var usuario = await _context.Usuarios
-                .FirstOrDefaultAsync(u => u.Email == dto.Email);
+            var usuario = await _context.Usuarios.FirstOrDefaultAsync(u => u.Email == dto.Email);
 
             if (usuario == null) return Ok();
 
