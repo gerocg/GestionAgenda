@@ -266,6 +266,182 @@ namespace GestionAgenda.Controllers
             });
         }
 
+        [Authorize(Roles = "Profesional,Admin")]
+        [HttpPost("crear-desde-chat")]
+        public async Task<IActionResult> CrearCitaDesdeChat([FromQuery] long chatId)
+        {
+            var estado = await _context.EstadoChats.FirstOrDefaultAsync(e => e.chatId == chatId);
+
+            if (estado == null)
+                return NotFound("No existe estado para el chat");
+
+            if (estado.fecha == null || estado.hora == null || string.IsNullOrEmpty(estado.telefono))
+                return BadRequest("El estado del chat no tiene todos los datos necesarios");
+
+            var paciente = await _context.Pacientes
+                .Include(p => p.Usuario)
+                .FirstOrDefaultAsync(p => p.Telefono == estado.telefono);
+
+            if (paciente == null)
+                return NotFound("Paciente no encontrado");
+
+            var profesionalId = await _context.Profesionales
+                .OrderBy(p => p.Id)
+                .Select(p => p.Id)
+                .FirstOrDefaultAsync();
+
+            if (profesionalId == 0)
+                return NotFound("Profesional no encontrado");
+
+            var fechaHoraInicio = estado.fecha.Value
+                .ToDateTime(estado.hora.Value);
+
+            var duracionMinutos = 60; 
+            var fechaHoraFin = fechaHoraInicio.AddMinutes(duracionMinutos);
+
+            if (fechaHoraInicio < DateTime.Now)
+                return BadRequest("No se pueden crear citas en fechas pasadas");
+
+            var haySolapamiento = await _context.Citas.AnyAsync(c =>
+                c.ProfesionalId == profesionalId &&
+                c.Estado != EstadoCita.Cancelada &&
+                c.FechaAgendada < fechaHoraFin &&
+                c.FechaAgendada.AddMinutes(c.DuracionMinutos) > fechaHoraInicio
+            );
+
+            if (haySolapamiento)
+                return Conflict("El horario ya está ocupado");
+
+            var nuevaCita = new Cita
+            {
+                PacienteId = paciente.Id,
+                ProfesionalId = profesionalId,
+                FechaAgendada = fechaHoraInicio,
+                DuracionMinutos = duracionMinutos,
+                Estado = EstadoCita.Confirmada,
+                Tratamiento = "Consulta general",
+                Observaciones = $"Creada desde Telegram con el ChatId: {chatId}"
+            };
+
+            _context.Citas.Add(nuevaCita);
+            estado.fecha = null;
+            estado.hora = null;
+            estado.telefono = null;
+            estado.updatedAt = DateTime.Now;
+            await _context.SaveChangesAsync();
+
+            await _emailService.EnviarConfirmacion(
+                nuevaCita,
+                paciente.Usuario.Email,
+                paciente.Usuario.NombreCompleto
+            );
+
+            return Ok(new
+            {
+                citaId = nuevaCita.Id,
+                paciente = paciente.Usuario.NombreCompleto,
+                fecha = fechaHoraInicio.ToString("dd/MM/yyyy"),
+                hora = fechaHoraInicio.ToString("HH:mm"),
+                duracion = duracionMinutos
+            });
+        }
+
+        [Authorize(Roles = "Profesional,Admin")]
+        [HttpGet("citas-por-telefono")]
+        public IActionResult GetCitasPorTelefono([FromQuery] string telefono)
+        {
+            telefono = PacienteService.NormalizarTelefono(telefono);
+
+            var paciente = _context.Pacientes
+                .Include(p => p.Usuario)
+                .FirstOrDefault(p => p.Telefono == telefono);
+
+            if (paciente == null)
+                return NotFound(new { mensaje = "Paciente no encontrado" });
+
+            var citas = _context.Citas
+                .Where(c => c.PacienteId == paciente.Id)
+                .Where(c => c.FechaAgendada >= DateTime.Now)
+                .OrderBy(c => c.FechaAgendada)
+                .Select(c => new
+                {
+                    citaId = c.Id,
+                    estado = c.Estado.ToString(),
+
+                    fechaInicioIso = c.FechaAgendada.ToString("yyyy-MM-ddTHH:mm:ss"),
+                    fechaFinIso = c.FechaAgendada
+                        .AddMinutes(c.DuracionMinutos)
+                        .ToString("yyyy-MM-ddTHH:mm:ss"),
+
+                    fecha = c.FechaAgendada.ToString("dd/MM/yyyy"),
+                    hora = c.FechaAgendada.ToString("HH:mm"),
+
+                    duracionMinutos = c.DuracionMinutos,
+                    tratamiento = c.Tratamiento,
+                    observaciones = c.Observaciones
+                })
+                .ToList();
+
+            return Ok(new
+            {
+                pacienteId = paciente.Id,
+                nombre = paciente.Usuario.NombreCompleto,
+                telefono = paciente.Telefono,
+                totalCitas = citas.Count,
+                citas = citas
+            });
+        }
+
+        [Authorize(Roles = "Profesional,Admin")]
+        [HttpGet("estado-incompleto")]
+        public IActionResult EstadoIncompleto([FromQuery] long chatId)
+        {
+            var estado = _context.EstadoChats.FirstOrDefault(e => e.chatId == chatId);
+
+            if (estado == null)
+                return NotFound(new { mensaje = "Estado no encontrado" });
+
+            bool incompleto =
+                estado.fecha == null ||
+                estado.hora == null ||
+                string.IsNullOrWhiteSpace(estado.telefono);
+
+            if (incompleto)
+            {
+                return Ok(new
+                {
+                    completo = false,
+                    mensaje = "El estado del chat está incompleto"
+                });
+            }
+
+            return Conflict(new
+            {
+                completo = true,
+                mensaje = "El estado del chat ya tiene todos los datos"
+            });
+        }
+
+        [Authorize(Roles = "Profesional,Admin")]
+        [HttpPost("cancelar-chat")]
+        public IActionResult CancelarChat([FromQuery] long chatId)
+        {
+            var estado = _context.EstadoChats.FirstOrDefault(e => e.chatId == chatId);
+
+            if (estado != null)
+            {
+                estado.fecha = null;
+                estado.hora = null;
+                estado.telefono = null;
+                estado.updatedAt = DateTime.UtcNow;
+                _context.SaveChanges();
+            }
+
+            return Ok(new { mensaje = "Estado del chat limpiado" });
+        }
+
+
+
         // GET: api/Citas
         [Authorize(Roles = "Profesional,Admin")]
         [HttpGet("getCitas")]

@@ -17,6 +17,8 @@ namespace GestionAgenda.Modelo
         public EstadoCita Estado { get; set; } = EstadoCita.Confirmada;
         public int DuracionMinutos { get; set; }
         public ICollection<Archivo> Archivos { get; set; }
+        public bool Recordatorio24hEnviado { get; set; }
+        public bool Recordatorio2hEnviado { get; set; }
 
     }
 }

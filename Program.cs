@@ -75,6 +75,7 @@ builder.Services.AddScoped<JwtService>();
 builder.Services.AddScoped<IPacienteService, PacienteService>();
 builder.Services.AddScoped<CredencialesService>();
 builder.Services.AddScoped<CitasEmailService>();
+builder.Services.AddHostedService<RecordatorioCitasService>();
 
 var app = builder.Build();
 

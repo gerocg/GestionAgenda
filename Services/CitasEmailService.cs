@@ -58,6 +58,22 @@ namespace GestionAgenda.Services
             );
         }
 
+        public async Task EnviarRecordatorio(Cita cita, string email, string nombre)
+        {
+            await EnviarMail(email, nombre,
+                "Recordatorio de cita",
+                $"""
+                <h3>Hola {nombre}</h3>
+                <p>Te recordamos que tienes una cita programada.</p>
+                <ul>
+                    <li><b>Fecha:</b> {cita.FechaAgendada:dd/MM/yyyy}</li>
+                    <li><b>Hora:</b> {cita.FechaAgendada:HH:mm}</li>
+                    <li><b>Duración:</b> {cita.DuracionMinutos} minutos</li>
+                </ul>
+                """
+            );
+        }
+
         private async Task EnviarMail(string email, string nombre, string asunto, string bodyHtml)
         {
             var message = new MimeMessage();
