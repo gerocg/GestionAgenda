@@ -119,7 +119,7 @@ namespace GestionAgenda.Controllers
         {
             var usuario = await _context.Usuarios.FirstOrDefaultAsync(u => u.Email == dto.Email);
 
-            if (usuario == null) return Ok();
+            if (usuario == null) return NotFound("Usuario no encontrado.");
 
             var nuevaPassword = _credenciales.GenerarContraseniaTemporal();
             _credenciales.SetPassword(usuario, nuevaPassword);
