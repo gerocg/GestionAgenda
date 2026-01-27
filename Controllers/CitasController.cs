@@ -462,10 +462,11 @@ namespace GestionAgenda.Controllers
                 ).Select(c => new
                 {
                     id = c.Id,
-                    title = c.Paciente.Usuario.NombreCompleto,
-                    start = c.FechaAgendada,
-                    end = c.FechaAgendada.AddMinutes(c.DuracionMinutos),
-                    estado = c.Estado.ToString()
+                    titulo = c.Paciente.Usuario.NombreCompleto,
+                    inicio = c.FechaAgendada,
+                    fin = c.FechaAgendada.AddMinutes(c.DuracionMinutos),
+                    estado = c.Estado.ToString(),
+                    pacienteId = c.PacienteId
                 }).ToListAsync();
 
             return Ok(citas);
