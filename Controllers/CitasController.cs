@@ -72,7 +72,7 @@ namespace GestionAgenda.Controllers
 
             if (haySolapamiento) return Conflict("El horario ya está ocupado");
             
-            if (cita.FechaHora < DateTime.Today) return BadRequest("No se pueden crear citas en fechas pasadas");
+            if (User.IsInRole("Paciente") && cita.FechaHora < DateTime.Now) return BadRequest("No se pueden crear citas en fechas pasadas");
 
             var nuevaCita = new Cita
             {
@@ -272,35 +272,24 @@ namespace GestionAgenda.Controllers
         {
             var estado = await _context.EstadoChats.FirstOrDefaultAsync(e => e.chatId == chatId);
 
-            if (estado == null)
-                return NotFound("No existe estado para el chat");
+            if (estado == null) return NotFound("No existe estado para el chat");
 
-            if (estado.fecha == null || estado.hora == null || string.IsNullOrEmpty(estado.telefono))
-                return BadRequest("El estado del chat no tiene todos los datos necesarios");
+            if (estado.fecha == null || estado.hora == null || string.IsNullOrEmpty(estado.telefono)) return BadRequest("El estado del chat no tiene todos los datos necesarios");
 
-            var paciente = await _context.Pacientes
-                .Include(p => p.Usuario)
-                .FirstOrDefaultAsync(p => p.Telefono == estado.telefono);
+            var paciente = await _context.Pacientes.Include(p => p.Usuario).FirstOrDefaultAsync(p => p.Telefono == estado.telefono);
 
-            if (paciente == null)
-                return NotFound("Paciente no encontrado");
+            if (paciente == null) return NotFound("Paciente no encontrado");
 
-            var profesionalId = await _context.Profesionales
-                .OrderBy(p => p.Id)
-                .Select(p => p.Id)
-                .FirstOrDefaultAsync();
+            var profesionalId = await _context.Profesionales.OrderBy(p => p.Id).Select(p => p.Id).FirstOrDefaultAsync();
 
-            if (profesionalId == 0)
-                return NotFound("Profesional no encontrado");
+            if (profesionalId == 0) return NotFound("Profesional no encontrado");
 
-            var fechaHoraInicio = estado.fecha.Value
-                .ToDateTime(estado.hora.Value);
+            var fechaHoraInicio = estado.fecha.Value.ToDateTime(estado.hora.Value);
 
             var duracionMinutos = 60; 
             var fechaHoraFin = fechaHoraInicio.AddMinutes(duracionMinutos);
 
-            if (fechaHoraInicio < DateTime.Now)
-                return BadRequest("No se pueden crear citas en fechas pasadas");
+            if (User.IsInRole("Paciente") && fechaHoraInicio < DateTime.Now) return BadRequest("No se pueden crear citas en fechas pasadas");
 
             var haySolapamiento = await _context.Citas.AnyAsync(c =>
                 c.ProfesionalId == profesionalId &&
@@ -613,7 +602,7 @@ namespace GestionAgenda.Controllers
 
             if (cita == null) return NotFound("La cita no existe");
 
-            if (dto.FechaHora < DateTime.Today) return BadRequest("No se pueden crear citas en fechas pasadas");
+            if (dto.FechaHora < DateTime.Today) return BadRequest("No se pueden editar citas en fechas pasadas");
 
             cita.FechaAgendada = dto.FechaHora;
             cita.DuracionMinutos = dto.Duracion;
@@ -630,13 +619,20 @@ namespace GestionAgenda.Controllers
             return NoContent();
         }
 
-        [Authorize(Roles = "Profesional,Admin")]
+        [Authorize(Roles = "Profesional,Admin,Paciente")]
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteCita(int id)
         {
             var cita = await _context.Citas.Include(c => c.Paciente).ThenInclude(p => p.Usuario).FirstOrDefaultAsync(c => c.Id == id);
 
             if (cita == null) return NotFound("La cita no existe");
+
+            if (User.IsInRole("Paciente"))
+            {
+                var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+                if (cita.Paciente.UsuarioId != userId) return Forbid("No puede cancelar una cita que no es suya");
+                if (cita.FechaAgendada <= DateTime.Now) return BadRequest("No se puede cancelar una cita pasada");
+            }
 
             cita.Estado = EstadoCita.Cancelada;
 

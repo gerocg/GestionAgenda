@@ -43,44 +43,22 @@ public class RecordatorioCitasService : BackgroundService
 
         var ahora = DateTime.Now;
 
-        var citas = await context.Citas
-            .Include(c => c.Paciente)
-                .ThenInclude(p => p.Usuario)
-            .Where(c =>
-                c.Estado == EstadoCita.Confirmada &&
-                c.FechaAgendada > ahora
-            )
-            .ToListAsync();
+        var citas = await context.Citas.Include(c => c.Paciente).ThenInclude(p => p.Usuario).Where(c => c.Estado == EstadoCita.Confirmada && c.FechaAgendada > ahora).ToListAsync();
 
         foreach (var cita in citas)
         {
             var diferencia = cita.FechaAgendada - ahora;
 
-            if (diferencia.TotalHours <= 24 &&
-                diferencia.TotalHours > 23 &&
-                !cita.Recordatorio24hEnviado)
+            if (diferencia.TotalHours <= 2 && diferencia.TotalHours > 0 && !cita.Recordatorio2hEnviado)
             {
-                await emailService.EnviarRecordatorio(
-                    cita,
-                    cita.Paciente.Usuario.Email,
-                    cita.Paciente.Usuario.NombreCompleto
-                );
-
-                cita.Recordatorio24hEnviado = true;
-            }
-
-            if (diferencia.TotalHours <= 2 &&
-                diferencia.TotalHours > 1 &&
-                !cita.Recordatorio2hEnviado)
-            {
-                await emailService.EnviarRecordatorio(
-                    cita,
-                    cita.Paciente.Usuario.Email,
-                    cita.Paciente.Usuario.NombreCompleto
-                );
-
+                await emailService.EnviarRecordatorio(cita, cita.Paciente.Usuario.Email, cita.Paciente.Usuario.NombreCompleto);
                 cita.Recordatorio2hEnviado = true;
             }
+            else if (diferencia.TotalHours <= 24 && diferencia.TotalHours > 2  && !cita.Recordatorio24hEnviado)
+            {
+                await emailService.EnviarRecordatorio(cita, cita.Paciente.Usuario.Email, cita.Paciente.Usuario.NombreCompleto);
+                cita.Recordatorio24hEnviado = true;
+            } 
         }
 
         await context.SaveChangesAsync();
